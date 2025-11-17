@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:18.1
+    container_name: dev_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: arche_admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: arche_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
