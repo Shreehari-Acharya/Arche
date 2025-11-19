@@ -10,11 +10,14 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
+    "@google/genai": "^1.30.0",
     "@prisma/client": "^6.19.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
-    "prisma": "^6.19.0"
+    "prisma": "^6.19.0",
+    "zod": "^4.1.12",
+    "zod-to-json-schema": "^3.25.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"

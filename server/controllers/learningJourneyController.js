@@ -1,3 +1,4 @@
+import roadmapAgent from "../aiAgents/roadmapAgent.js";
 import prisma from "../exports/prisma.js";
 
 async function newLearningJourney(req, res) {
@@ -36,7 +37,9 @@ async function newLearningJourney(req, res) {
                 }
             });
 
-            return res.status(201).json(learningPreference);   
+            // return res.status(201).json(learningPreference);   
+            const roadmap = await roadmapAgent(topicName, `${hoursPerDay} hours per day for ${monthsToComplete} months`);
+            // return res.status(201).json(roadmap);
         }
         catch (creationError) {
             console.error('Error creating learning journey:', creationError);
