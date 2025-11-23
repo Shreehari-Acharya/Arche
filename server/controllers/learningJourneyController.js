@@ -1,5 +1,6 @@
 import roadmapAgent from "../aiAgents/roadmapAgent.js";
 import prisma from "../exports/prisma.js";
+import findRelevantVideoMaterials from "../lib/findRelevantVideoMaterials.js";
 
 async function newLearningJourney(req, res) {
     
@@ -37,9 +38,21 @@ async function newLearningJourney(req, res) {
                 }
             });
 
-            // return res.status(201).json(learningPreference);   
             const roadmap = await roadmapAgent(topicName, `${hoursPerDay} hours per day for ${monthsToComplete} months`);
-            // return res.status(201).json(roadmap);
+
+            const subTopicsData = await prisma.subTopic.createMany({
+                data: roadmap.map((dayTopic) => ({
+                    description: dayTopic,
+                    learningJourneyId: learningJourney.id,
+                })),
+            });
+
+            await findRelevantVideoMaterials(subTopicsData, 3);
+
+            return res.status(201).json({
+                success: true,
+                message: 'Learning journey created successfully.'
+            });
         }
         catch (creationError) {
             console.error('Error creating learning journey:', creationError);
