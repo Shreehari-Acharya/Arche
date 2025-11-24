@@ -7,7 +7,7 @@ class AuthRemoteDataSource {
 
   Future<UserModel> login({required String email, required String password}) async{
     final response = await http.post(
-      Uri.parse('$baseUrl/login'),
+      Uri.parse('$baseUrl/auth/login'),
       body: jsonEncode({'email':email, 'password':password}),
       headers: {'Content-Type': 'application/json'}
     );
@@ -15,13 +15,19 @@ class AuthRemoteDataSource {
     return UserModel.fromJson(jsonDecode(response.body));
   }
 
-  Future<UserModel> register({required String fullname, required String email, required String password}) async{
+Future<UserModel> register({required String fullname, required String email, required String password}) async{
     final response = await http.post(
-      Uri.parse('$baseUrl/register'),
+      Uri.parse('$baseUrl/auth/register'),
       body: jsonEncode({'fullname':fullname, 'email':email, 'password':password}),
       headers: {'Content-Type': 'application/json'}
     );
-    print(response.body);
-    return UserModel.fromJson(jsonDecode(response.body));
+    
+    print('Response Status: ${response.statusCode}');
+    
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return UserModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Registration failed: ${response.body}');
+    }
   }
 }
