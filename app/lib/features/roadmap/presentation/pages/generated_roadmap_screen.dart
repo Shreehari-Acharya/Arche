@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../pages/daily_task_screen.dart';
+import '../../../tasks/presentation/pages/daily_task_screen.dart';
 
 class GeneratedRoadmapScreen extends StatelessWidget {
   final List<String> topics;

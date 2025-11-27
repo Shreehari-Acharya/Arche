@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 // ✅ AI GENERATED ROADMAP SCREEN
-import './features/auth/presentation/pages/generated_roadmap_screen.dart';
+import 'features/roadmap/presentation/pages/generated_roadmap_screen.dart';
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 

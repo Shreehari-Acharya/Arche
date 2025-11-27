@@ -6,11 +6,11 @@ import 'features/auth/presentation/pages/login.dart';
 import 'features/auth/presentation/pages/signup.dart';
 
 // NEW MAIN APP NAVIGATION (Instagram-style UI)
-import 'features/auth/navigation/arche_shell.dart';
+import 'features/core/presentation/navigation/arche_shell.dart';
 
 // AUTH LAYERS
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
-import 'features/auth/data/repostories/auth_repository_impl.dart';
+import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/usecases/login_use_cases.dart';
 import 'features/auth/domain/usecases/register_use_cases.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';

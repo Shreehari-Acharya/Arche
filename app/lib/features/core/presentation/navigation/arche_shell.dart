@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../screens/courses_screen.dart';
-import '../screens/notes_screen.dart';
-import '../screens/roadmap_screen.dart';
-import '../screens/profile_screen.dart';
-import '../screens/summarize_screen.dart';
+import '../../../courses/presentation/pages/courses_screen.dart';
+import '../../../summarizer/presentation/pages/notes_screen.dart';
+import '../../../roadmap/presentation/pages/roadmap_screen.dart';
+import '../../../profile/presentation/pages/profile_screen.dart';
+import '../../../summarizer/presentation/pages/summarize_screen.dart';
 import 'arche_bottom_nav.dart';
 import 'arche_drawer.dart';
 
@@ -65,7 +65,7 @@ class _ArcheShellState extends State<ArcheShell> {
   // -------------------------------
   void _openSummarize() {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const SummarizeScreen()),
+      MaterialPageRoute(builder: (_) => SummarizeScreen()),
     );
   }
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../widgets/welcome_header.dart';
-import '../widgets/feature_card.dart';
+import '../../../core/presentation/widgets/welcome_header.dart';
+import '../../../core/presentation/widgets/feature_card.dart';
 
 class CoursesScreen extends StatelessWidget {
   const CoursesScreen({super.key});
