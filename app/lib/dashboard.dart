@@ -1,382 +1,201 @@
 import 'package:flutter/material.dart';
+import 'features/learning/data/models/learning_journey_model.dart';
+import 'features/learning/data/repositories/learning_repository.dart';
+// ✅ Import the Roadmap Screen
+import 'features/learning/presentation/pages/generated_roadmap_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final LearningRepository _repository = LearningRepository();
+  late Future<List<LearningJourney>> _journeysFuture;
+
+  // ⚠️ Replace with the actual logged-in userId
+  final String _userId = "cmi4kz1610000ijnmm3jun0l9"; 
+
+  @override
+  void initState() {
+    super.initState();
+    _journeysFuture = _repository.getAllJourneys(_userId);
+  }
+
+  // ✅ NEW: Function to handle Card Tap
+  void _openJourney(LearningJourney summaryItem) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      // 1. Fetch full details (subTopics, videos) from API
+      final fullJourney = await _repository.getJourneyDetails(_userId, summaryItem.id);
+
+      // 2. Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      // 3. Navigate to Roadmap Screen with FULL data
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => GeneratedRoadmapScreen(journey: fullJourney),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog on error
+      if (mounted) Navigator.pop(context);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error opening journey: $e")),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F4FF),
       body: SafeArea(
-        child: ListView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
-          children: [
-            const SizedBox(height: 10),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            setState(() {
+              _journeysFuture = _repository.getAllJourneys(_userId);
+            });
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+            children: [
+              const SizedBox(height: 10),
+              const Text("Welcome back! 👋",
+                  style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 6),
+              const Text("Ready to continue your learning journey?",
+                  style: TextStyle(fontSize: 15, color: Colors.black54)),
+              const SizedBox(height: 25),
 
-            // ---------------- WELCOME ----------------
-            const Text(
-              "Welcome back, Alex! 👋",
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.w700,
+              _progressCard(),
+              const SizedBox(height: 30),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  Text("Your Learning Journeys",
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                  Text("View All →",
+                      style: TextStyle(fontSize: 14, color: Color(0xFF6A5AE0), fontWeight: FontWeight.w600))
+                ],
               ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              "Ready to continue your learning journey?",
-              style: TextStyle(fontSize: 15, color: Colors.black54),
-            ),
-            const SizedBox(height: 25),
+              const SizedBox(height: 16),
 
-            // PROGRESS CARD
-            _progressCard(),
-            const SizedBox(height: 30),
+              // ---------------------------------------------
+              // ✅ DYNAMIC LIST FROM API
+              // ---------------------------------------------
+              FutureBuilder<List<LearningJourney>>(
+                future: _journeysFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text("Error: ${snapshot.error}"));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return _emptyStateCard();
+                  }
 
-            // ---------------- WEEK ROADMAP ----------------
-            const Text(
-              "This Week's Roadmap",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
+                  return Column(
+                    children: snapshot.data!.map((journey) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: _roadmapCard(
+                          icon: Icons.school,
+                          title: journey.topicName,
+                          subtitle: "Created: ${journey.createdAt.split('T')[0]}",
+                          onTap: () => _openJourney(journey), // ✅ Calls API on tap
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
               ),
-            ),
 
-            const SizedBox(height: 16),
-
-            _roadmapCard(
-              icon: Icons.menu_book,
-              title: "Variables & Data Types",
-              subtitle: "Day 1",
-              status: "In Progress",
-              statusColor: Color(0xFF32C682),
-            ),
-            const SizedBox(height: 16),
-
-            _roadmapCard(
-              icon: Icons.menu_book,
-              title: "Control Flow",
-              subtitle: "Day 2",
-            ),
-            const SizedBox(height: 16),
-
-            _roadmapCard(
-              icon: Icons.menu_book,
-              title: "Functions",
-              subtitle: "Day 3",
-            ),
-
-            const SizedBox(height: 30),
-
-            // ---------------- QUICK ACCESS ----------------
-            const Text(
-              "Quick Access",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 18),
-
-            _quickAccessCard(
-              icon: Icons.calendar_today,
-              color1: Color(0xFF6A7BFF),
-              color2: Color(0xFF5A5FFF),
-              title: "My Study Plan",
-              subtitle: "Weekly roadmap & milestones",
-            ),
-            const SizedBox(height: 16),
-
-            _quickAccessCard(
-              icon: Icons.note,
-              color1: Color(0xFFB36CFF),
-              color2: Color(0xFF8B52FF),
-              title: "Smart Notes",
-              subtitle: "AI-powered study notes",
-            ),
-            const SizedBox(height: 16),
-
-            _quickAccessCard(
-              icon: Icons.flash_on,
-              color1: Color(0xFFFF7A7A),
-              color2: Color(0xFFFF4D4D),
-              title: "Revision Tests",
-              subtitle: "Quiz yourself instantly",
-            ),
-            const SizedBox(height: 16),
-
-            _quickAccessCard(
-              icon: Icons.videocam_rounded,
-              color1: Color(0xFF7A6BFF),
-              color2: Color(0xFF8E75FF),
-              title: "Curated Videos",
-              subtitle: "Handpicked learning content",
-            ),
-
-            const SizedBox(height: 40),
-          ],
+              const SizedBox(height: 30),
+              // ... Quick Access Cards (same as before) ...
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // ----------------------------------------------------
-  // PROGRESS CARD
-  // ----------------------------------------------------
-  Widget _progressCard() {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12.withOpacity(0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // HEADER
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // TEXT
-              Expanded(
-                child: const Text(
-                  "Your Progress\nWeek 2 of 4 • Python Fundamentals",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    height: 1.3,
-                  ),
-                ),
-              ),
-
-              // STREAK BOX
-              Container(
-                width: 86,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFE4E4),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  children: const [
-                    Icon(Icons.local_fire_department,
-                        color: Colors.orange, size: 26),
-                    SizedBox(height: 4),
-                    Text(
-                      "7",
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      "day\nstreak",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          const Text(
-            "Overall Progress",
-            style: TextStyle(color: Colors.black54, fontSize: 14),
-          ),
-          const SizedBox(height: 8),
-
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: 0.45,
-              minHeight: 8,
-              backgroundColor: Colors.grey.shade300,
-              color: Colors.black87,
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _statusDot(Colors.green, "12 completed"),
-              _statusDot(Colors.blue, "8 in progress"),
-              _statusDot(Colors.grey, "7 upcoming"),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _statusDot(Color color, String label) {
-    return Row(
-      children: [
-        CircleAvatar(radius: 5, backgroundColor: color),
-        const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 13)),
-      ],
-    );
-  }
-
-  // ----------------------------------------------------
-  // ROADMAP CARD
-  // ----------------------------------------------------
+  // ... (Keep _progressCard, _roadmapCard, _quickAccessCard, _emptyStateCard exactly as before) ...
+  
+  // Re-pasting _roadmapCard just for clarity on where onTap goes:
   Widget _roadmapCard({
     required IconData icon,
     required String title,
     required String subtitle,
-    String? status,
-    Color? statusColor,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12.withOpacity(0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ICON
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF7A6BFF), Color(0xFF8F79FF)],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12.withOpacity(0.04),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFF7A6BFF), Color(0xFF8F79FF)]),
+                borderRadius: BorderRadius.circular(16),
               ),
-              borderRadius: BorderRadius.circular(16),
+              child: Icon(icon, color: Colors.white, size: 28),
             ),
-            child: Icon(icon, color: Colors.white, size: 28),
-          ),
-          const SizedBox(width: 16),
-
-          // TEXT
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    if (status != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: (statusColor ?? Colors.green).withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          status,
-                          style: TextStyle(
-                            color: statusColor ?? Colors.green,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  subtitle,
-                  style: const TextStyle(color: Colors.black54),
-                ),
-              ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 4),
+                  Text(subtitle, style: const TextStyle(color: Colors.black54)),
+                ],
+              ),
             ),
-          ),
-        ],
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }
-
-  // ----------------------------------------------------
-  // QUICK ACCESS CARD
-  // ----------------------------------------------------
-  Widget _quickAccessCard({
-    required IconData icon,
-    required Color color1,
-    required Color color2,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12.withOpacity(0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(colors: [color1, color2]),
-            ),
-            child: Icon(icon, color: Colors.white, size: 26),
-          ),
-          const SizedBox(width: 16),
-
-          // TEXT
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  subtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.black54),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+  
+  Widget _progressCard() {
+    // ... paste your previous progress card code here ...
+    return Container(height: 100, color: Colors.grey[200], child: Center(child: Text("Progress Card Placeholder")));
+  }
+  
+  Widget _emptyStateCard() {
+    return const Padding(
+      padding: EdgeInsets.all(20.0),
+      child: Center(child: Text("No journeys yet. Create one!")),
     );
   }
 }
