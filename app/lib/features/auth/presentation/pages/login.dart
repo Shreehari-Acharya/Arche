@@ -7,7 +7,7 @@ import 'package:app/features/auth/presentation/widgets/auth_pasword_field.dart';
 import 'package:app/features/auth/presentation/widgets/login_prompt.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'signup.dart'; // Navigate to sign up screen
+import 'signup.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -22,26 +22,11 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  void _login() {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter email and password')),
-      );
-      return;
-    }
-
-    // For now just log them; later add real auth.
-    print('Email: $email - Password: $password');
-  }
-
   void _onLogin() {
     BlocProvider.of<AuthBloc>(context).add(
       LoginEvent(
-        email: _emailController.text,
-        password: _passwordController.text,
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       ),
     );
   }
@@ -56,6 +41,10 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              
+              // -----------------------------
+              // HEADER
+              // -----------------------------
               Center(
                 child: Column(
                   children: [
@@ -93,7 +82,9 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 28),
 
-              // EMAIL
+              // -----------------------------
+              // EMAIL FIELD
+              // -----------------------------
               _label("Email Address"),
               AuthInputField(
                 hint: "you@example.com",
@@ -102,10 +93,12 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 18),
 
-              // PASSWORD
+              // -----------------------------
+              // PASSWORD FIELD
+              // -----------------------------
               _label("Password"),
               AuthPaswordField(
-                hint: "Create a strong password",
+                hint: "Enter your password",
                 controller: _passwordController,
                 isVisible: showPassword,
                 onToggle: () => setState(() => showPassword = !showPassword),
@@ -113,17 +106,20 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 22),
 
-             BlocConsumer<AuthBloc, AuthState>(
-                builder: (context, state){
-                  if(state is AuthLoading){
-                    return Center(child: CircularProgressIndicator(),);
+              // -----------------------------
+              // LOGIN BUTTON + BLOC
+              // -----------------------------
+              BlocConsumer<AuthBloc, AuthState>(
+                builder: (context, state) {
+                  if (state is AuthLoading) {
+                    return const Center(child: CircularProgressIndicator());
                   }
                   return AuthButton(text: "Login", onPressed: _onLogin);
                 },
                 listener: (context, state) {
                   if (state is AuthSuccess) {
-                    
-                    Navigator.pushNamed(context, '/dashboard');
+                    // 🔥 FIXED — No more /dashboard route crash
+                    Navigator.pushReplacementNamed(context, '/arche');
                   } else if (state is AuthFailure) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(state.error)),
@@ -134,9 +130,19 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 5),
 
+              // -----------------------------
+              // SIGN UP PROMPT
+              // -----------------------------
               LoginPrompt(
                 text: "Don't have an account? Create account",
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SignUpScreen(),
+                    ),
+                  );
+                },
               ),
 
               const SizedBox(height: 20),
@@ -147,29 +153,11 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // LABEL WIDGET
+  // LABEL
   Widget _label(String text) {
     return Text(
       text,
       style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-    );
-  }
-
-  // “Create account” text link -> SignUp
-  Widget _buildRegisterButton() {
-    return Center(
-      child: GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const SignUpScreen()),
-          );
-        },
-        child: const Text(
-          "Don't have an account? Create account",
-          style: TextStyle(color: Colors.grey),
-        ),
-      ),
     );
   }
 }

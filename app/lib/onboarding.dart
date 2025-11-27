@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dashboard.dart';   // 🔥 IMPORTANT: Added dashboard import
 
+// ✅ AI GENERATED ROADMAP SCREEN
+import './features/auth/presentation/pages/generated_roadmap_screen.dart';
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -20,64 +21,95 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   String extraResources = "";
 
   final TextEditingController interestController = TextEditingController();
-  final TextEditingController extraResourceController =
-      TextEditingController();
+  final TextEditingController extraResourceController = TextEditingController();
+
+  // ✅ BACK BUTTON HANDLING (steps + page)
+  Future<bool> _handleBack() async {
+    if (currentStep > 1) {
+      setState(() => currentStep--);
+      return false;
+    }
+    return true;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFF3F0FF), Color(0xFFEFF4FF)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+    return WillPopScope(
+      onWillPop: _handleBack,
+      child: Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFF3F0FF), Color(0xFFEFF4FF)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
-            child: Column(
-              children: [
-                const SizedBox(height: 10),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
 
-                // PROGRESS BAR
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(6, (index) {
-                    return Container(
-                      width: 45,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: currentStep - 1 >= index
-                            ? const Color(0xFF6A5AE0)
-                            : Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(40),
+                  // ✅ TOP BACK ARROW
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          if (currentStep > 1) {
+                            setState(() => currentStep--);
+                          } else {
+                            Navigator.pop(context);
+                          }
+                        },
+                        child: const Icon(Icons.arrow_back,
+                            size: 26, color: Colors.black87),
                       ),
-                    );
-                  }),
-                ),
-
-                const SizedBox(height: 14),
-                Text(
-                  "Step $currentStep of 6",
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    ],
                   ),
-                ),
-                const SizedBox(height: 20),
 
-                // MAIN CARD
-                _buildCard(),
+                  const SizedBox(height: 16),
 
-                const SizedBox(height: 25),
+                  // ✅ PROGRESS BAR
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: List.generate(6, (index) {
+                      return Container(
+                        width: 45,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: currentStep - 1 >= index
+                              ? const Color(0xFF6A5AE0)
+                              : Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(40),
+                        ),
+                      );
+                    }),
+                  ),
 
-                // NAVIGATION BUTTONS
-                _buildNavigationButtons(),
+                  const SizedBox(height: 14),
+                  Text(
+                    "Step $currentStep of 6",
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
 
-                const SizedBox(height: 30),
-              ],
+                  const SizedBox(height: 20),
+
+                  // ✅ MAIN CARD
+                  _buildCard(),
+
+                  const SizedBox(height: 25),
+
+                  // ✅ BOTTOM BUTTONS
+                  _buildNavigationButtons(),
+
+                  const SizedBox(height: 30),
+                ],
+              ),
             ),
           ),
         ),
@@ -85,7 +117,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // CARD CONTAINER FOR STEPS
+  // -------------------- CARD CONTAINER --------------------
   Widget _buildCard() {
     return Container(
       padding: const EdgeInsets.all(22),
@@ -114,7 +146,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // STEP 1 — INTERESTS
+  // -------------------- STEP 1 --------------------
   Widget _step1() {
     final interests = [
       "Python",
@@ -135,7 +167,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             style: TextStyle(color: Colors.black54)),
         const SizedBox(height: 16),
 
-        // Input field
         TextField(
           controller: interestController,
           decoration: InputDecoration(
@@ -157,7 +188,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
         const SizedBox(height: 14),
 
-        // Chips
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -187,7 +217,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // STEP 2 — SKILL LEVEL
+  // -------------------- STEP 2 --------------------
   Widget _step2() {
     final levels = ["Beginner", "Intermediate", "Advanced"];
     return _radioGroup(
@@ -198,7 +228,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // STEP 3 — LANGUAGE
+  // -------------------- STEP 3 --------------------
   Widget _step3() {
     return _radioGroup(
       title: "Preferred language",
@@ -209,7 +239,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // STEP 4 — HOURS PER DAY
+  // -------------------- STEP 4 --------------------
   Widget _step4() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +262,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // STEP 5 — TIME PERIOD
+  // -------------------- STEP 5 --------------------
   Widget _step5() {
     final options = ["1 Week", "2 Weeks", "1 Month", "2 Months", "3 Months"];
     return _radioGroup(
@@ -243,7 +273,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // STEP 6 — SUMMARY
+  // -------------------- STEP 6 --------------------
   Widget _step6Summary() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,7 +285,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             style: TextStyle(color: Colors.black54)),
         const SizedBox(height: 18),
 
-        // JSON Preview Box
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(18),
@@ -272,29 +301,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
         ),
-
-        const SizedBox(height: 22),
-
-        // SUCCESS BOX
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE3FFE9),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFF6FD98D)),
-          ),
-          child: const Text(
-            "✓ Profile created successfully! Click continue to start learning.",
-            style: TextStyle(
-              color: Color(0xFF277A41),
-            ),
-          ),
-        )
       ],
     );
   }
 
-  // SUMMARY JSON
+  // -------------------- JSON SUMMARY --------------------
   String _generateSummaryJson() {
     return """
 {
@@ -308,7 +319,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 """;
   }
 
-  // REUSABLE RADIO GROUP
+  // -------------------- RADIO GROUP --------------------
   Widget _radioGroup({
     required String title,
     String? subtitle,
@@ -343,20 +354,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  // BOTTOM NAVIGATION BUTTONS (BACK + NEXT)
+  // -------------------- BOTTOM BUTTONS --------------------
   Widget _buildNavigationButtons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // BACK BUTTON
+        // BACK
         GestureDetector(
-          onTap: currentStep > 1
-              ? () {
-                  setState(() {
-                    currentStep--;
-                  });
-                }
-              : null,
+          onTap: () {
+            if (currentStep > 1) {
+              setState(() => currentStep--);
+            } else {
+              Navigator.pop(context);
+            }
+          },
           child: Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -381,18 +392,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ),
 
-        // NEXT / CONTINUE BUTTON
+        // ✅ FINISH → AI GENERATED ROADMAP
         GestureDetector(
           onTap: () {
             if (currentStep < 6) {
               setState(() => currentStep++);
             } else {
-              // 🔥 Navigate to Dashboard
               Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => DashboardScreen()),
-      );
-
+                context,
+                MaterialPageRoute(
+                  builder: (_) => GeneratedRoadmapScreen(
+                    topics: selectedInterests,
+                    skillLevel: skillLevel,
+                    language: language,
+                    studyHours: studyHours,
+                    timePeriod: timePeriod,
+                  ),
+                ),
+              );
             }
           },
           child: Container(
@@ -407,7 +424,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: Row(
               children: [
                 Text(
-                  currentStep == 6 ? "Continue to Dashboard" : "Next",
+                  currentStep == 6 ? "Generate Roadmap" : "Next",
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 15,
