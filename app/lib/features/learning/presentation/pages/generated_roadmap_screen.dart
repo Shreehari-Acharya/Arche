@@ -1,20 +1,13 @@
 import 'package:flutter/material.dart';
-import '../pages/daily_task_screen.dart';
+import '../../data/models/learning_journey_model.dart'; 
+import 'daily_task_screen.dart';
 
 class GeneratedRoadmapScreen extends StatelessWidget {
-  final List<String> topics;
-  final String skillLevel;
-  final String language;
-  final int studyHours;
-  final String timePeriod;
+  final LearningJourney journey;
 
   const GeneratedRoadmapScreen({
     super.key,
-    required this.topics,
-    required this.skillLevel,
-    required this.language,
-    required this.studyHours,
-    required this.timePeriod,
+    required this.journey,
   });
 
   @override
@@ -41,15 +34,25 @@ class GeneratedRoadmapScreen extends StatelessWidget {
           _generatedRoadmap(),
           const SizedBox(height: 30),
 
-          // ✅ START LEARNING BUTTON → GO TO DAILY TASKS
+          // START LEARNING BUTTON
           GestureDetector(
             onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const DailyTaskScreen(),
-                ),
-              );
+              // Check if subtopics exist
+              if (journey.subTopics != null && journey.subTopics!.isNotEmpty) {
+                // Navigate to Daily Task Screen with Day 1 Data
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => DailyTaskScreen(
+                      subTopic: journey.subTopics![0], 
+                    ),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("No topics available in this journey")),
+                );
+              }
             },
             child: Container(
               height: 52,
@@ -76,9 +79,6 @@ class GeneratedRoadmapScreen extends StatelessWidget {
     );
   }
 
-  // --------------------------------------------------
-  // ✅ PROFILE SUMMARY CARD
-  // --------------------------------------------------
   Widget _profileCard() {
     return Container(
       padding: const EdgeInsets.all(18),
@@ -97,16 +97,14 @@ class GeneratedRoadmapScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Your Learning Profile",
+            "Your Learning Journey",
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 16),
 
-          _infoRow("Topics", topics.join(", ")),
-          _infoRow("Skill Level", skillLevel),
-          _infoRow("Language", language),
-          _infoRow("Study Hours", "$studyHours hrs/day"),
-          _infoRow("Duration", timePeriod),
+          _infoRow("Topic", journey.topicName),
+          _infoRow("Days", "${journey.subTopics?.length ?? 0} Days"),
+          _infoRow("Created", journey.createdAt.split('T')[0]),
         ],
       ),
     );
@@ -118,7 +116,7 @@ class GeneratedRoadmapScreen extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 120,
+            width: 100,
             child: Text(
               title,
               style: const TextStyle(
@@ -129,7 +127,7 @@ class GeneratedRoadmapScreen extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              value.isEmpty ? "Not provided" : value,
+              value,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
@@ -138,20 +136,7 @@ class GeneratedRoadmapScreen extends StatelessWidget {
     );
   }
 
-  // --------------------------------------------------
-  // ✅ GENERATED ROADMAP (VISUAL TIMELINE)
-  // --------------------------------------------------
   Widget _generatedRoadmap() {
-    final roadmapSteps = [
-      "Introduction & Setup",
-      "Core Concepts",
-      "Hands-on Practice",
-      "Advanced Topics",
-      "Mini Project",
-      "Revision",
-      "Final Assessment",
-    ];
-
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -169,51 +154,39 @@ class GeneratedRoadmapScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Your AI Weekly Plan",
+            "Your Weekly Plan",
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 18),
 
-          ...roadmapSteps.map(
-            (step) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.check_circle,
-                    size: 20,
-                    color: Color(0xFF6A5AE0),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      step,
-                      style: const TextStyle(fontSize: 15),
+          if (journey.subTopics != null)
+            ...journey.subTopics!.map(
+              (subTopic) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.check_circle,
+                      size: 20,
+                      color: Color(0xFF6A5AE0),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        // Extract just the title part if formatted like "Day 1: Title"
+                        subTopic.description.contains(':') 
+                            ? subTopic.description.split(':')[1].trim()
+                            : subTopic.description, 
+                        style: const TextStyle(fontSize: 15, height: 1.3),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ),
-
-          const SizedBox(height: 18),
-
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE9F7F3),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF46C38B)),
-            ),
-            child: const Text(
-              "✅ You got this! Stay consistent and complete your learning journey on time.",
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1F7A52),
-              ),
-            ),
-          ),
+            )
+          else
+            const Text("No plan generated yet."),
         ],
       ),
     );
