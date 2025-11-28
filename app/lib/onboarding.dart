@@ -302,3 +302,139 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 }
+
+class LearningJourney {
+  final String id;
+  final String topicName;
+  final String userId;
+  final String createdAt;
+  final List<SubTopic> subTopics;
+
+  LearningJourney({
+    required this.id,
+    required this.topicName,
+    required this.userId,
+    required this.createdAt,
+    required this.subTopics,
+  });
+
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "topicName": topicName,
+        "userId": userId,
+        "createdAt": createdAt,
+        "subTopics": subTopics.map((s) => s.toJson()).toList(),
+      };
+}
+
+class SubTopic {
+  final String id;
+  final String description;
+  final List<VideoResource> videoResources;
+
+  SubTopic({
+    required this.id,
+    required this.description,
+    required this.videoResources,
+  });
+
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "description": description,
+        "videoResources": videoResources.map((v) => v.toJson()).toList(),
+      };
+}
+
+class VideoResource {
+  final String id;
+  final String title;
+  final String url;
+  final int duration; // minutes
+
+  VideoResource({
+    required this.id,
+    required this.title,
+    required this.url,
+    required this.duration,
+  });
+
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "title": title,
+        "url": url,
+        "duration": duration,
+      };
+}
+
+class GeneratedRoadmapScreen extends StatelessWidget {
+  final LearningJourney journey;
+
+  const GeneratedRoadmapScreen({Key? key, required this.journey}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Generated Roadmap'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: [
+            Text(
+              journey.topicName,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text('Created: ${journey.createdAt}'),
+            const SizedBox(height: 12),
+            ...journey.subTopics.map((sub) {
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(sub.description, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      if (sub.videoResources.isNotEmpty)
+                        ...sub.videoResources.map((v) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(child: Text(v.title)),
+                                  const SizedBox(width: 8),
+                                  Text('${v.duration}m', style: const TextStyle(color: Colors.black54)),
+                                ],
+                              ),
+                            )),
+                      if (sub.videoResources.isEmpty)
+                        const Text('No video resources', style: TextStyle(color: Colors.black54)),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+            const SizedBox(height: 16),
+            const Text('Raw JSON', style: TextStyle(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F6FF),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                journey.toJson().toString(),
+                style: const TextStyle(fontFamily: "Courier New", fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
