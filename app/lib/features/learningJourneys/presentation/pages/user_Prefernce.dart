@@ -34,14 +34,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _loadCreds() async {
-    final uid = await AuthLocal.getUserId();
+    //final uid = await AuthLocal.getUserId();
     final tok = await AuthLocal.getToken();
     if (!mounted) return;
     setState(() {
       _userId = "cmikhub6a00bh6mmvazs2emim";
       _token = tok;
     });
-    print('DEBUG loaded uid=$_userId tok=$_token');
+   // print('DEBUG loaded uid=$_userId tok=$_token');
   }
 
   int currentStep = 1;
@@ -203,11 +203,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
           onSubmitted: (v) {
-            if (v.isNotEmpty)
+            if (v.isNotEmpty) {
               setState(() {
                 selectedInterests = [v];
                 interestController.clear();
               });
+            }
           },
         ),
         const SizedBox(height: 14),

@@ -9,12 +9,6 @@ class LearningRepository {
 
     LearningRepository({this.authToken});
 
-  Map<String, String> _headers({bool jsonBody = false}) {
-    return {
-      if (jsonBody) 'Content-Type': 'application/json',
-      if (authToken != null) 'Authorization': 'Bearer $authToken',
-    };
-  }
 
   // 1. Fetch ALL Learning Journeys for the User
   Future<List<LearningJourney>> getAllJourneys(String userId) async {

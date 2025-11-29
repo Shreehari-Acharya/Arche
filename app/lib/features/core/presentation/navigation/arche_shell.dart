@@ -1,7 +1,6 @@
 import 'package:app/features/Dashboard/presentation/pages/dashboard.dart';
 import 'package:flutter/material.dart';
 import '../../../learningJourneys/presentation/pages/Course_list_screen.dart';
-import '../../../summarizer/presentation/pages/notes_screen.dart';
 import '../../../summarizer/presentation/pages/summarize_screen.dart';
 import 'arche_bottom_nav.dart';
 import '../../../learningJourneys/presentation/pages/user_Prefernce.dart';
@@ -26,7 +25,7 @@ class _ArcheShellState extends State<ArcheShell> {
       case 1:
         return const CourseListScreen();
       case 3:
-        return const NotesScreen();
+        return const SummarizeScreen();
       default:
         return const DashboardScreen();
     }
@@ -51,15 +50,7 @@ class _ArcheShellState extends State<ArcheShell> {
     setState(() => _currentIndex = index);
   }
 
-  // -------------------------------
-  // Drawer navigation
-  // -------------------------------
-  void _openSummarize() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => SummarizeScreen()));
-  }
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
