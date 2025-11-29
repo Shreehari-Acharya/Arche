@@ -4,6 +4,8 @@ import '../../../learningJourneys/presentation/pages/Course_list_screen.dart';
 import '../../../summarizer/presentation/pages/summarize_screen.dart';
 import 'arche_bottom_nav.dart';
 import '../../../learningJourneys/presentation/pages/user_Prefernce.dart';
+import '../../../learningJourneys/data/repositories/learning_repository.dart';
+import '../../../auth/presentation/bloc/auth_local.dart';
 
 class ArcheShell extends StatefulWidget {
   const ArcheShell({super.key});
@@ -15,6 +17,23 @@ class ArcheShell extends StatefulWidget {
 class _ArcheShellState extends State<ArcheShell> {
   int _currentIndex = 0;
 
+  String? _token;
+  LearningRepository? _repo;
+
+  @override
+  void initState() {
+    super.initState();
+    _initRepo();
+  }
+
+  Future<void> _initRepo() async {
+    final token = await AuthLocal.getToken();
+    setState(() {
+      _token = token;
+      _repo = LearningRepository(authToken: _token);
+    });
+  }
+
   // -------------------------------
   // MAIN SCREENS (Tabs)
   // -------------------------------
@@ -23,7 +42,7 @@ class _ArcheShellState extends State<ArcheShell> {
       case 0:
         return const DashboardScreen();
       case 1:
-        return const CourseListScreen();
+        return  CourseListScreen(repository: _repo!);
       case 2:
         return const OnboardingScreen();
       case 3:
