@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-class AuthPaswordField extends StatelessWidget {
+class AuthPasswordField extends StatelessWidget {
   final String hint;
   final TextEditingController controller;
   final bool isVisible;
   final VoidCallback onToggle;
-  const AuthPaswordField({
+  const AuthPasswordField({
     super.key,
     required this.hint,
     required this.controller,

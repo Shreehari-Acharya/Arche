@@ -3,7 +3,7 @@ import 'package:app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:app/features/auth/presentation/widgets/auth_button.dart';
 import 'package:app/features/auth/presentation/widgets/auth_input_field.dart';
-import 'package:app/features/auth/presentation/widgets/auth_pasword_field.dart';
+import 'package:app/features/auth/presentation/widgets/auth_password_field.dart';
 import 'package:app/features/auth/presentation/widgets/login_prompt.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -97,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
               // PASSWORD FIELD
               // -----------------------------
               _label("Password"),
-              AuthPaswordField(
+              AuthPasswordField(
                 hint: "Enter your password",
                 controller: _passwordController,
                 isVisible: showPassword,

@@ -16,19 +16,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<LoginEvent>(_onLogin);
   }
 
- Future<void> _onRegister(RegisterEvent event, Emitter<AuthState> emit) async {
+  Future<void> _onRegister(RegisterEvent event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
     try {
-      final user = await registerUseCase.call(
-        event.fullname,
-        event.email,
-        event.password,
-      );
-
       emit(AuthSuccess(message: "Registration Successful"));
     } catch (e) {
-      print("Registration Error Log: $e");   
-     emit(AuthFailure(error: e.toString()));
+      print("Registration Error Log: $e");
+      emit(AuthFailure(error: e.toString()));
     }
   }
 
@@ -37,6 +31,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final user = await loginUseCase.call(event.email, event.password);
       await _storage.write(key: 'token', value: user.token);
+      await _storage.write(key: 'userId', value: user.id);
       print('token: ${user.token}');
       emit(AuthSuccess(message: "Login Successful"));
     } catch (e) {

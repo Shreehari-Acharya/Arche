@@ -21,20 +21,20 @@ class ArcheBottomNav extends StatelessWidget {
       showUnselectedLabels: true,
       items: const [
         BottomNavigationBarItem(
-          icon: Icon(Icons.menu_book_outlined),
-          label: 'Courses',
+          icon: Icon(Icons.dashboard_outlined),
+          label: 'Dashboard',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.psychology_outlined),
-          label: 'Notes',
+          icon: Icon(Icons.menu_book_outlined),
+          label: 'Courses',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.add_circle_outline),
           label: 'New',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today_outlined),
-          label: 'Roadmap',
+          icon: Icon(Icons.psychology_outlined),
+          label: 'Notes',
         ),
       ],
     );

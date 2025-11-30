@@ -1,15 +1,11 @@
+import 'package:app/features/Dashboard/presentation/pages/dashboard.dart';
 import 'package:flutter/material.dart';
-
-import '../../../courses/presentation/pages/courses_screen.dart';
-import '../../../summarizer/presentation/pages/notes_screen.dart';
-import '../../../roadmap/presentation/pages/roadmap_screen.dart';
-import '../../../profile/presentation/pages/profile_screen.dart';
+import '../../../learningJourneys/presentation/pages/Course_list_screen.dart';
 import '../../../summarizer/presentation/pages/summarize_screen.dart';
 import 'arche_bottom_nav.dart';
-import 'arche_drawer.dart';
-
-// Onboarding is directly under lib/
-import 'package:app/onboarding.dart';
+import '../../../learningJourneys/presentation/pages/user_Prefernce.dart';
+import '../../../learningJourneys/data/repositories/learning_repository.dart';
+import '../../../auth/presentation/bloc/auth_local.dart';
 
 class ArcheShell extends StatefulWidget {
   const ArcheShell({super.key});
@@ -21,21 +17,38 @@ class ArcheShell extends StatefulWidget {
 class _ArcheShellState extends State<ArcheShell> {
   int _currentIndex = 0;
 
+  String? _token;
+  LearningRepository? _repo;
+
+  @override
+  void initState() {
+    super.initState();
+    _initRepo();
+  }
+
+  Future<void> _initRepo() async {
+    final token = await AuthLocal.getToken();
+    setState(() {
+      _token = token;
+      _repo = LearningRepository(authToken: _token);
+    });
+  }
+
   // -------------------------------
   // MAIN SCREENS (Tabs)
   // -------------------------------
   Widget _buildBody() {
     switch (_currentIndex) {
       case 0:
-        return const CoursesScreen();
+        return const DashboardScreen();
       case 1:
-        return const NotesScreen();
+        return  CourseListScreen(repository: _repo!);
+      case 2:
+        return const OnboardingScreen();
       case 3:
-        return const RoadmapScreen();
-      case 4:
-        return const ProfileScreen();
+        return const SummarizeScreen();
       default:
-        return const CoursesScreen();
+        return const DashboardScreen();
     }
   }
 
@@ -47,12 +60,10 @@ class _ArcheShellState extends State<ArcheShell> {
     // Special case: + Button (index = 2)
     // Opens Onboarding and DOES NOT change tab
     // ----------------------------------------
-    if (index == 2) {
+    if (index == 5) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => const OnboardingScreen(),
-        ),
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
       );
       return; // prevent tab switch
     }
@@ -60,39 +71,12 @@ class _ArcheShellState extends State<ArcheShell> {
     setState(() => _currentIndex = index);
   }
 
-  // -------------------------------
-  // Drawer navigation
-  // -------------------------------
-  void _openSummarize() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => SummarizeScreen()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: ArcheDrawer(
-        onDashboardTap: () {
-          Navigator.pop(context);
-          setState(() => _currentIndex = 0);
-        },
-        onLearningJourneyTap: () {
-          Navigator.pop(context);
-          setState(() => _currentIndex = 3); // roadmap tab
-        },
-        onSummarizeTap: () {
-          Navigator.pop(context);
-          _openSummarize();
-        },
-        onProfileTap: () {
-          Navigator.pop(context);
-          setState(() => _currentIndex = 4);
-        },
-      ),
-
       appBar: AppBar(
         elevation: 0,
+        automaticallyImplyLeading: false,
         title: const Text('Arche'),
       ),
 

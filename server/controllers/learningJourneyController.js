@@ -51,7 +51,8 @@ async function newLearningJourney(req, res) {
 
             return res.status(201).json({
                 success: true,
-                message: 'Learning journey created successfully.'
+                message: 'Learning journey created successfully.',
+                data: { id: learningJourney.id }
             });
         }
         catch (creationError) {

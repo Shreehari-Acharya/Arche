@@ -1,15 +1,12 @@
-import 'package:app/dashboard.dart';
 import 'package:app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:app/features/auth/presentation/widgets/auth_button.dart';
 import 'package:app/features/auth/presentation/widgets/auth_input_field.dart';
-import 'package:app/features/auth/presentation/widgets/auth_pasword_field.dart';
+import 'package:app/features/auth/presentation/widgets/auth_password_field.dart';
 import 'package:app/features/auth/presentation/widgets/login_prompt.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../onboarding.dart';
-import 'login.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -24,26 +21,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _fullnameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
-  void _createAccount() {
-    final fullname = _fullnameController.text.trim();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
-    if (fullname.isEmpty || email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please fill all fields')));
-      return;
-    }
-
-    print("Username : $fullname - Email : $email - Password : $password");
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-    );
-  }
 
   @override
   void dispose() {
@@ -129,7 +106,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 18),
 
               _label("Password"),
-              AuthPaswordField(
+              AuthPasswordField(
                 hint: "Create a strong password",
                 controller: _passwordController,
                 isVisible: showPassword,
