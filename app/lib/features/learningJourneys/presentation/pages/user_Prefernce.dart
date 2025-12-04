@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../auth/presentation/bloc/auth_local.dart';
 import '../../data/repositories/learning_repository.dart';
 import 'generated_roadmap_screen.dart';
-
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -25,6 +25,7 @@ double _mapTimePeriodToMonths(String period) {
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
   String? _userId;
+  String? _token;
 
   @override
   void initState() {
@@ -33,9 +34,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _loadCreds() async {
+    final tok = await AuthLocal.getToken();
     if (!mounted) return;
     setState(() {
-      _userId = "cmieugm7s0000uye0jzmwhgut"; // ✅ TEMP USER
+      _userId = "cmieugm7s0000uye0jzmwhgut"; // TEMP USER
+      _token = tok;
     });
   }
 
@@ -87,15 +90,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
 
                 const SizedBox(height: 14),
-                Text(
-                  "Step $currentStep of 6",
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-
+                Text("Step $currentStep of 6"),
                 const SizedBox(height: 20),
+
                 _buildCard(),
                 const SizedBox(height: 25),
                 _buildNavigationButtons(),
@@ -113,13 +110,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12.withOpacity(0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,59 +139,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "What do you want to learn today?",
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-        ),
+        const Text("What do you want to learn today?"),
         const SizedBox(height: 16),
-
-        TextField(
-          controller: interestController,
-          decoration: InputDecoration(
-            hintText: "e.g., Python",
-            filled: true,
-            fillColor: Colors.grey.shade100,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-              borderSide: BorderSide.none,
-            ),
-          ),
-          onSubmitted: (v) {
-            if (v.isNotEmpty) {
-              setState(() {
-                selectedInterests = [v];
-                interestController.clear();
-              });
-            }
-          },
-        ),
-
-        const SizedBox(height: 14),
 
         Wrap(
           spacing: 8,
-          runSpacing: 8,
           children: interests.map((item) {
             final selected = selectedInterests.contains(item);
-
-            return GestureDetector(
-              onTap: () => setState(() {
-                if (selected) {
-                  selectedInterests.clear();
-                } else {
-                  selectedInterests = [item];
-                }
-              }),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color:
-                      selected ? const Color(0xFFEDE4FF) : Colors.grey[200],
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(item),
-              ),
+            return ChoiceChip(
+              label: Text(item),
+              selected: selected,
+              onSelected: (_) {
+                setState(() => selectedInterests = [item]);
+              },
             );
           }).toList(),
         ),
@@ -233,17 +183,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _step4() {
     return Column(
       children: [
-        const Text(
-          "How many hours per day?",
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-        ),
-
+        const Text("How many hours per day?"),
         Slider(
           value: studyHours.toDouble(),
           min: 1,
           max: 10,
           divisions: 9,
-          label: "$studyHours hrs",
           onChanged: (v) => setState(() => studyHours = v.toInt()),
         ),
       ],
@@ -264,37 +209,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _step6Summary() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Your Learning Profile",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 18),
-
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F6FF),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Text(
-            """
-{
-  "topic": "${selectedInterests.isNotEmpty ? selectedInterests.first : ''}",
-  "skillLevel": "$skillLevel",
-  "language": "$language",
-  "duration": "$timePeriod"
-}
-""",
-            style: const TextStyle(fontFamily: "Courier New", fontSize: 14),
-          ),
-        ),
+      children: const [
+        Text("Ready to generate your roadmap"),
       ],
     );
   }
 
-  /// ✅ RADIO GROUP
   Widget _radioGroup({
     required String title,
     required List<String> options,
@@ -304,11 +224,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 16),
+        Text(title),
         ...options.map(
           (item) => RadioListTile(
             title: Text(item),
@@ -321,119 +237,61 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  /// ✅✅✅ NAVIGATION BUTTONS with WORKING API
+  /// ✅ ✅ ✅ FINAL FIX: PASS repository & userId
   Widget _buildNavigationButtons() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        if (currentStep > 1)
-          GestureDetector(
-            onTap: () => setState(() => currentStep--),
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.arrow_back, size: 18),
-                  SizedBox(width: 6),
-                  Text("Back", style: TextStyle(fontSize: 15)),
-                ],
-              ),
-            ),
-          )
-        else
-          const SizedBox(width: 1),
-
         GestureDetector(
           onTap: () async {
             if (currentStep < 6) {
               setState(() => currentStep++);
             } else {
-              var uid = _userId ?? '';
+              final uid = _userId ?? '';
+              final tok = _token ?? '';
 
-              if (uid.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please login first')),
-                );
-                return;
-              }
+              final repo = LearningRepository(authToken: tok);
 
-              final repo = LearningRepository();
-              final topicName = selectedInterests.isNotEmpty
-                  ? selectedInterests.first
-                  : 'Untitled';
+              final topicName =
+                  selectedInterests.isNotEmpty ? selectedInterests.first : 'Untitled';
 
               final months = _mapTimePeriodToMonths(timePeriod);
 
-              try {
-                final createdId = await repo.createJourney(
-                  userId: uid,
-                  topicName: topicName,
-                  skillLevel: skillLevel,
-                  language: language,
-                  hoursPerDay: studyHours,
-                  monthsToComplete: months.round(), // Convert double to int
-                );
+              final createdId = await repo.createJourney(
+                userId: uid,
+                topicName: topicName,
+                skillLevel: skillLevel,
+                language: language,
+                hoursPerDay: studyHours,
+                monthsToComplete: months,
+              );
 
-                final detailed = await repo.getJourneyDetails(
-                  userId: uid,
-                  journeyId: createdId,
-                );
+              final detailed = await repo.getJourneyDetails(uid, createdId);
 
-                if (!mounted) return;
+              if (!mounted) return;
 
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        GeneratedRoadmapScreen(journey: detailed),
+              /// ✅ ✅ ✅ THIS IS THE FIX
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => GeneratedRoadmapScreen(
+                    journey: detailed,
+                    repository: repo,
+                    userId: uid,
                   ),
-                );
-              } catch (e) {
-                if (!mounted) return;
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to generate roadmap: $e'),
-                  ),
-                );
-              }
+                ),
+              );
             }
           },
           child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 26,
-              vertical: 12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.blueAccent,
               borderRadius: BorderRadius.circular(30),
             ),
-            child: Row(
-              children: [
-                Text(
-                  currentStep == 6 ? "Generate Roadmap" : "Next",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                const Icon(Icons.arrow_forward_sharp,
-                    color: Colors.white, size: 18),
-              ],
+            child: Text(
+              currentStep == 6 ? "Generate Roadmap" : "Next",
+              style: const TextStyle(color: Colors.white),
             ),
           ),
         ),

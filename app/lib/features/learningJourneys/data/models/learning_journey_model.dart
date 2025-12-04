@@ -3,14 +3,14 @@ class LearningJourney {
   final String topicName;
   final String userId;
   final String createdAt;
-  final List<SubTopic>? subTopics;
+  final List<SubTopic> subTopics;
 
   LearningJourney({
     required this.id,
     required this.topicName,
     required this.userId,
     required this.createdAt,
-    this.subTopics,
+    required this.subTopics,
   });
 
   factory LearningJourney.fromJson(Map<String, dynamic> json) {
@@ -23,7 +23,7 @@ class LearningJourney {
           ? (json['subTopics'] as List)
               .map((e) => SubTopic.fromJson(e))
               .toList()
-          : null,
+          : [],
     );
   }
 }
@@ -31,11 +31,13 @@ class LearningJourney {
 class SubTopic {
   final String id;
   final String description;
+  final bool isCompleted;
   final List<VideoResource> videoResources;
 
   SubTopic({
     required this.id,
     required this.description,
+    required this.isCompleted,
     required this.videoResources,
   });
 
@@ -43,6 +45,7 @@ class SubTopic {
     return SubTopic(
       id: json['id']?.toString() ?? '',
       description: json['description'] ?? '',
+      isCompleted: json['isCompleted'] ?? false,
       videoResources: json['videoResources'] != null
           ? (json['videoResources'] as List)
               .map((e) => VideoResource.fromJson(e))
@@ -68,7 +71,7 @@ class VideoResource {
   factory VideoResource.fromJson(Map<String, dynamic> json) {
     return VideoResource(
       id: json['id']?.toString() ?? '',
-      title: json['title'] ?? 'Untitled Video',
+      title: json['title'] ?? '',
       url: json['url'] ?? '',
       duration: json['duration'] ?? 0,
     );

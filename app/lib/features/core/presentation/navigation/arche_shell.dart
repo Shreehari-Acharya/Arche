@@ -30,7 +30,7 @@ class _ArcheShellState extends State<ArcheShell> {
     final token = await AuthLocal.getToken();
     setState(() {
       _token = token;
-      _repo = LearningRepository(); // Removed authToken parameter
+      _repo = LearningRepository(authToken: _token);
     });
   }
 
@@ -38,20 +38,16 @@ class _ArcheShellState extends State<ArcheShell> {
   // MAIN SCREENS (Tabs)
   // -------------------------------
   Widget _buildBody() {
-    // Show loading indicator while repository is initializing
-    if (_repo == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     switch (_currentIndex) {
       case 0:
         return const DashboardScreen();
       case 1:
-        return CourseListScreen(repository: _repo!);
+        return  CourseListScreen(repository: _repo!);
       case 2:
         return const OnboardingScreen();
       case 3:
-        return const SummarizeScreen();
+        return const NotesScreen()
+;
       default:
         return const DashboardScreen();
     }
@@ -62,7 +58,7 @@ class _ArcheShellState extends State<ArcheShell> {
   // -------------------------------
   void _onTabSelected(int index) {
     // ----------------------------------------
-    // Special case: + Button (index = 5)
+    // Special case: + Button (index = 2)
     // Opens Onboarding and DOES NOT change tab
     // ----------------------------------------
     if (index == 5) {

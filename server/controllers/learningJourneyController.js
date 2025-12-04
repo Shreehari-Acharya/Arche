@@ -2,147 +2,141 @@ import roadmapAgent from "../aiAgents/roadmapAgent.js";
 import prisma from "../exports/prisma.js";
 import findRelevantVideoMaterials from "../lib/findRelevantVideoMaterials.js";
 
+// ✅ CREATE NEW JOURNEY
 async function newLearningJourney(req, res) {
-    
-    const {
-        topicName,
+  const {
+    topicName,
+    skillLevel,
+    language,
+    hoursPerDay,
+    monthsToComplete,
+    userId,
+  } = req.body;
+
+  try {
+    if (!topicName || !skillLevel || !language || !hoursPerDay || !monthsToComplete || !userId) {
+      return res.status(400).json({ error: "All fields are required." });
+    }
+
+    const learningJourney = await prisma.learningJourney.create({
+      data: { topicName, userId },
+    });
+
+    await prisma.learningPreference.create({
+      data: {
+        mainTopicName: topicName,
         skillLevel,
         language,
         hoursPerDay,
-        monthsToComplete
-    } = req.body;
+        monthsToComplete,
+        learningJourneyId: learningJourney.id,
+      },
+    });
 
-    try {
-        // Validate input
-        if (!topicName || !skillLevel || !language || !hoursPerDay || !monthsToComplete) {
-            return res.status(400).json({ error: 'All fields are required.' });
-        }
+    const roadmap = await roadmapAgent(
+      topicName,
+      `${hoursPerDay} hours per day for ${monthsToComplete} months`
+    );
 
-        // Create new learning journey
-        try {
-            const learningJourney = await prisma.learningJourney.create({
-                data: {
-                    topicName: topicName,
-                    userId: req.body.userId, 
-                }
-            });
-                    
-            const learningPreference = await prisma.learningPreference.create({
-                data: {
-                    mainTopicName: topicName,
-                    skillLevel: skillLevel, 
-                    language: language,
-                    hoursPerDay: hoursPerDay,
-                    monthsToComplete: monthsToComplete,
-                    learningJourneyId: learningJourney.id,
-                }
-            });
+    const subTopicsData = await prisma.subTopic.createManyAndReturn({
+      data: roadmap.map((dayTopic) => ({
+        description: dayTopic,
+        learningJourneyId: learningJourney.id,
+        isCompleted: false, // ✅ important
+      })),
+    });
 
-            const roadmap = await roadmapAgent(topicName, `${hoursPerDay} hours per day for ${monthsToComplete} months`);
+    await findRelevantVideoMaterials(subTopicsData, 3);
 
-            const subTopicsData = await prisma.subTopic.createManyAndReturn({
-                data: roadmap.map((dayTopic) => ({
-                    description: dayTopic,
-                    learningJourneyId: learningJourney.id,
-                })),
-            });
-
-            await findRelevantVideoMaterials(subTopicsData, 3);
-
-            return res.status(201).json({
-                success: true,
-                message: 'Learning journey created successfully.',
-                data: { id: learningJourney.id }
-            });
-        }
-        catch (creationError) {
-            console.error('Error creating learning journey:', creationError);
-            return res.status(500).json({ error: 'Failed to create learning journey.' });
-        }
-    } 
-    catch (error) {
-        console.error('Error in newLearningJourney:', error);
-        return res.status(500).json({ error: 'Internal server error.' });
-    }
+    return res.status(201).json({
+      success: true,
+      message: "Learning journey created successfully.",
+      data: { id: learningJourney.id },
+    });
+  } catch (error) {
+    console.error("Error in newLearningJourney:", error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
 }
 
+// ✅ GET JOURNEYS & DETAILS
 async function getLearningJourneys(req, res) {
-    const { userId } = req.query;
-    console.log("Received userId:", userId);
-    if (!userId) {
-        return res.status(400).json({ error: 'userId query parameter is required.' });
-    }
+  const { userId, learningJourneyId } = req.query;
 
-    const { learningJourneyId } = req.query;
+  if (!userId) {
+    return res.status(400).json({ error: "userId is required." });
+  }
 
+  try {
     if (learningJourneyId) {
-        try {
-            const learningJourney = await prisma.learningJourney.findUnique({
-                where: { id: learningJourneyId, userId: userId },
-                include: {
-                    subTopics: {
-                        include: {
-                            videoResources: true
-                        }
-                    }
-                }
-            });
+      const learningJourney = await prisma.learningJourney.findUnique({
+        where: { id: learningJourneyId },
+        include: {
+          subTopics: {
+            include: { videoResources: true },
+          },
+        },
+      });
 
-            if (!learningJourney) {
-                return res.status(404).json({ error: 'Learning journey not found.' });
-            }
+      if (!learningJourney) {
+        return res.status(404).json({ error: "Learning journey not found." });
+      }
 
-            return res.status(200).json({
-                success: true,
-                data: learningJourney
-            });
-        } catch (error) {
-            console.error('Error fetching learning journey by ID:', error);
-            return res.status(500).json({ error: 'Internal server error.' });
-        }
+      return res.status(200).json({
+        success: true,
+        data: learningJourney,
+      });
+    } else {
+      const learningJourneys = await prisma.learningJourney.findMany({
+        where: { userId },
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: learningJourneys,
+      });
     }
-    else {
-        try {
-            const learningJourneys = await prisma.learningJourney.findMany({
-                where: { userId: userId },
-            });
-
-            return res.status(200).json({
-                success: true,
-                data: learningJourneys
-            });
-        } catch (error) {
-            console.error('Error fetching learning journeys:', error);
-            return res.status(500).json({ error: 'Internal server error.' });
-        }
-    }
+  } catch (error) {
+    console.error("Error fetching learning journeys:", error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
 }
 
+// ✅ ✅ ✅ FIXED MARK TASK COMPLETE API
 async function updateProgress(req, res) {
-    const { learningJourneyId, subTopicId } = req.body;
+    console.log("updateProgress called with body:", req.body);
+  const { subTopicId } = req.body;
 
-    if (!learningJourneyId || !subTopicId) {
-        return res.status(400).json({ error: 'learningJourneyId and subTopicId are required.' });
+  if (!subTopicId) {
+    return res.status(400).json({ error: "subTopicId is required." });
+  }
+
+  try {
+    // ✅ STEP 1: Get current completion state
+    const previous = await prisma.subTopic.findUnique({
+      where: { id: subTopicId },
+      select: { isCompleted: true },
+    });
+
+    if (!previous) {
+      return res.status(404).json({ error: "Sub-topic not found." });
     }
 
-    try {
-        const previousSubTopicStatus = await prisma.subTopic.findUnique({
-            where: { id: subTopicId, learningJourneyId: learningJourneyId },
-            select: { isCompleted: true },
-        });
-        const subTopic = await prisma.subTopic.update({
-            where: { id: subTopicId, learningJourneyId: learningJourneyId },
-            data: { isCompleted: !previousSubTopicStatus.isCompleted },
-        });
+    // ✅ STEP 2: Toggle completion
+    const updatedSubTopic = await prisma.subTopic.update({
+      where: { id: subTopicId }, // ✅ VALID PRISMA USAGE
+      data: { isCompleted: !previous.isCompleted },
+    });
 
-        return res.status(200).json({
-            success: true,
-            message: 'Sub-topic progress altered.',
-            updatedSubTopic: subTopic
-        });
-    } catch (error) {
-        console.error('Error updating progress:', error);
-        return res.status(500).json({ error: 'Internal server error.' });
-    }
+    return res.status(200).json({
+      success: true,
+      message: "Sub-topic completion updated successfully.",
+      updatedSubTopic,
+    });
+  } catch (error) {
+    console.error("Error updating progress:", error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
 }
+
 export { newLearningJourney, getLearningJourneys, updateProgress };
