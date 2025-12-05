@@ -26,6 +26,7 @@ double _mapTimePeriodToMonths(String period) {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   String? _userId;
   String? _token;
+  bool _isLoading = false; // loading state
 
   @override
   void initState() {
@@ -59,6 +60,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       return false;
     }
     return true;
+  }
+
+  @override
+  void dispose() {
+    interestController.dispose();
+    super.dispose();
   }
 
   @override
@@ -143,6 +150,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         const Text("What do you want to learn today?"),
         const SizedBox(height: 16),
 
+        // ✅ Custom topic input
+        TextField(
+          controller: interestController,
+          decoration: InputDecoration(
+            hintText: "Type your own topic (e.g., Cybersecurity)",
+            hintStyle: const TextStyle(fontSize: 12),
+            border: const OutlineInputBorder(),
+          ),
+          textInputAction: TextInputAction.done,
+          onSubmitted: (val) {
+            final text = val.trim();
+            if (text.isNotEmpty) {
+              setState(() => selectedInterests = [text]);
+            }
+          },
+          onChanged: (val) {
+            final text = val.trim();
+            setState(() {
+              if (text.isNotEmpty && selectedInterests.isNotEmpty) {
+                selectedInterests = [];
+              }
+              // Calling setState ensures the Next button re-evaluates `hasTopic`
+            });
+          },
+        ),
+        const SizedBox(height: 12),
+
         Wrap(
           spacing: 8,
           children: interests.map((item) {
@@ -151,6 +185,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               label: Text(item),
               selected: selected,
               onSelected: (_) {
+                // ✅ Clear text when choosing a chip
+                interestController.clear();
                 setState(() => selectedInterests = [item]);
               },
             );
@@ -185,12 +221,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Column(
       children: [
         const Text("How many hours per day?"),
-        Slider(
-          value: studyHours.toDouble(),
-          min: 1,
-          max: 10,
-          divisions: 9,
-          onChanged: (v) => setState(() => studyHours = v.toInt()),
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            showValueIndicator: ShowValueIndicator.always, // always show popup
+          ),
+          child: Slider(
+            value: studyHours.toDouble(),
+            min: 1,
+            max: 10,
+            divisions: 9,
+            label: "$studyHours h", // value shown in the indicator
+            onChanged: (v) => setState(() => studyHours = v.toInt()),
+          ),
         ),
       ],
     );
@@ -238,60 +280,116 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   /// ✅ ✅ ✅ FINAL FIX: PASS repository & userId
   Widget _buildNavigationButtons() {
+    final hasTopic =
+        selectedInterests.isNotEmpty ||
+        interestController.text.trim().isNotEmpty;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        GestureDetector(
-          onTap: () async {
-            if (currentStep < 6) {
-              setState(() => currentStep++);
-            } else {
-              final uid = _userId ?? '';
-              final tok = _token ?? '';
-
-              final repo = LearningRepository(authToken: tok);
-
-              final topicName = selectedInterests.isNotEmpty
-                  ? selectedInterests.first
-                  : 'Untitled';
-
-              final months = _mapTimePeriodToMonths(timePeriod);
-
-              final createdId = await repo.createJourney(
-                userId: uid,
-                topicName: topicName,
-                skillLevel: skillLevel,
-                language: language,
-                hoursPerDay: studyHours,
-                monthsToComplete: months,
-              );
-
-              final detailed = await repo.getJourneyDetails(uid, createdId);
-
-              if (!mounted) return;
-
-              /// ✅ ✅ ✅ THIS IS THE FIX
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => GeneratedRoadmapScreen(
-                    journey: detailed,
-                    repository: repo,
-                    userId: uid,
+        AbsorbPointer(
+          absorbing: _isLoading || (!hasTopic && currentStep == 1),
+          child: GestureDetector(
+            onTap: () async {
+              // Block progression from Step 1 if no topic
+              if (currentStep == 1 && !hasTopic) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please set a topic to continue'),
                   ),
-                ),
-              );
-            }
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.blueAccent,
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Text(
-              currentStep == 6 ? "Generate Roadmap" : "Next",
-              style: const TextStyle(color: Colors.white),
+                );
+                return;
+              }
+
+              if (currentStep < 6) {
+                setState(() => currentStep++);
+              } else {
+                setState(() => _isLoading = true);
+                try {
+                  final uid = _userId ?? '';
+                  final tok = _token ?? '';
+
+                  final repo = LearningRepository(authToken: tok);
+
+                  // Prefer typed text, fallback to selected chip, then default
+                  final typed = interestController.text.trim();
+                  final topicName = typed.isNotEmpty
+                      ? typed
+                      : (selectedInterests.isNotEmpty
+                            ? selectedInterests.first
+                            : 'Untitled');
+
+                  final months = _mapTimePeriodToMonths(timePeriod);
+
+                  final createdId = await repo.createJourney(
+                    userId: uid,
+                    topicName: topicName,
+                    skillLevel: skillLevel,
+                    language: language,
+                    hoursPerDay: studyHours,
+                    monthsToComplete: months,
+                  );
+
+                  final detailed = await repo.getJourneyDetails(uid, createdId);
+
+                  if (!mounted) return;
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => GeneratedRoadmapScreen(
+                        journey: detailed,
+                        repository: repo,
+                        userId: uid,
+                      ),
+                    ),
+                  );
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Failed to generate roadmap'),
+                      ),
+                    );
+                  }
+                } finally {
+                  if (mounted) setState(() => _isLoading = false);
+                }
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 12),
+              decoration: BoxDecoration(
+                color: (_isLoading || (!hasTopic && currentStep == 1))
+                    ? Colors.grey
+                    : Colors.blueAccent,
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: _isLoading
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          "Generating...",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      currentStep == 6 ? "Generate Roadmap" : "Next",
+                      style: const TextStyle(color: Colors.white),
+                    ),
             ),
           ),
         ),
