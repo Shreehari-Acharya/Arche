@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../widgets/course_progress_card.dart';
-import '../widgets/daily_task_card.dart';
 import '../../../learningJourneys/data/models/learning_journey_model.dart';
 import '../../../learningJourneys/data/repositories/learning_repository.dart';
-import './daily_task_screen.dart';
 import '../../../auth/presentation/bloc/auth_local.dart';
+import '../../../learningJourneys/presentation/pages/Course_screen.dart'; 
+import '../widgets/course_progress_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -14,70 +13,81 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  String userId = ''; // initialize to avoid LateInitializationError
+  String userId = "";
   final LearningRepository repository = LearningRepository();
 
-  Future<List<LearningJourney>>? _journeysFuture; // start as null
+  /// We will store detailed journeys here
+  Future<List<LearningJourney>>? _detailedJourneysFuture;
 
   @override
   void initState() {
     super.initState();
-    _init(); // only call async init, do NOT call _loadJourneys() here
+    _initDashboard();
   }
 
-  Future<void> _init() async {
-    final uid = await AuthLocal.getUserId() ?? '';
+  Future<void> _initDashboard() async {
+    final uid = await AuthLocal.getUserId() ?? "";
     if (!mounted) return;
+
+    userId = uid;
     setState(() {
-      userId = uid;
-      _journeysFuture = repository.getAllJourneys(userId); // set future here
+      _detailedJourneysFuture = _loadDetailedJourneys();
     });
   }
 
-  /// ✅ Reload dashboard data
-  void _loadJourneys() {
+  /// 🔥 Loads ALL journeys + fetches full details for each
+  Future<List<LearningJourney>> _loadDetailedJourneys() async {
+    final journeys = await repository.getAllJourneys(userId);
+
+    List<LearningJourney> detailed = [];
+
+    for (final j in journeys) {
+      final full = await repository.getJourneyDetails(userId, j.id);
+      detailed.add(full);
+    }
+
+    return detailed;
+  }
+
+  void _reloadDashboard() {
     setState(() {
-      _journeysFuture = repository.getAllJourneys(userId);
+      _detailedJourneysFuture = _loadDetailedJourneys();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Show loader until future is ready
-    if (_journeysFuture == null) {
+    if (_detailedJourneysFuture == null) {
       return const Scaffold(
-        backgroundColor: Color(0xFFF7F4FF),
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F4FF),
+
       appBar: AppBar(
         title: const Text("Dashboard"),
         backgroundColor: Colors.deepPurple,
       ),
+
       body: FutureBuilder<List<LearningJourney>>(
-        future: _journeysFuture,
+        future: _detailedJourneysFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+
           if (snapshot.hasError) {
             return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  "Dashboard Error:\n${snapshot.error}",
-                  textAlign: TextAlign.center,
-                ),
-              ),
+              child: Text("Error: ${snapshot.error}"),
             );
           }
 
           final journeys = snapshot.data ?? [];
+
           if (journeys.isEmpty) {
-            return const Center(child: Text("No learning journeys found."));
+            return const Center(child: Text("No learning journeys yet"));
           }
 
           return SingleChildScrollView(
@@ -89,71 +99,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   "Welcome Back 👋",
                   style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
 
-                ...journeys.map((course) {
-                  final int totalTasks = course.subTopics.length;
-                  final int completedTasks =
-                      course.subTopics
-                          .where((e) => e.videoResources.isNotEmpty)
-                          .length;
+                ...journeys.map((journey) {
+                  final total = journey.subTopics.length;
+                  final completed = journey.subTopics
+                      .where((t) => t.isCompleted)
+                      .length;
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        course.topicName,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      CourseProgressCard(
-                        courseName: course.topicName,
-                        completed: completedTasks,
-                        total: totalTasks == 0 ? 1 : totalTasks,
-                        streak: 5,
-                      ),
-                      const SizedBox(height: 18),
+                  final double progress =
+                      total == 0 ? 0 : completed / total;
 
-                      if (course.subTopics.isEmpty)
-                        const Text("No tasks available.")
-                      else
-                        ...course.subTopics.map(
-                          (task) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: DailyTaskCard(
-                              title: task.description,
-                              description: task.videoResources.isNotEmpty
-                                  ? "Watch ${task.videoResources.first.title}"
-                                  : "Practice Task",
-                              completed: false,
-                              onTap: () async {
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => DailyTaskScreen(
-                                      subTopic: task,
-                                      onCompleted: _loadJourneys,
-                                    ),
-                                  ),
-                                );
-                                _loadJourneys();
-                              },
-                            ),
+                  final int streak = _calculateStreak(journey.subTopics);
+
+                  return GestureDetector(
+                    onTap: () async {
+                      final fullJourney = await repository.getJourneyDetails(
+                        userId,
+                        journey.id,
+                      );
+
+                      if (!mounted) return;
+
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => GeneratedRoadmapScreen(
+                            journey: fullJourney,
+                            repository: repository,
+                            userId: userId,
                           ),
                         ),
-                      const SizedBox(height: 30),
-                    ],
+                      );
+
+                      _reloadDashboard(); // refresh UI after returning
+                    },
+
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: CourseProgressCard(
+                        courseName: journey.topicName,
+                        completed: completed,
+                        total: total == 0 ? 1 : total,
+                        streak: streak,
+                      ),
+                    ),
                   );
                 }),
-                const SizedBox(height: 40),
+
+                const SizedBox(height: 20),
               ],
             ),
           );
         },
       ),
     );
+  }
+
+  /// Simple streak logic
+  int _calculateStreak(List<SubTopic> topics) {
+    int streak = 0;
+
+    for (final t in topics) {
+      if (t.isCompleted) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    return streak;
   }
 }
