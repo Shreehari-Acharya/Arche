@@ -1,10 +1,12 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide CarouselController;
+import 'package:carousel_slider/carousel_slider.dart';
 import '../../../learningJourneys/data/models/learning_journey_model.dart';
 import '../../../learningJourneys/data/repositories/learning_repository.dart';
 import '../../../auth/presentation/bloc/auth_local.dart';
 import '../../../learningJourneys/presentation/pages/Course_screen.dart';
+import '../../../learningJourneys/presentation/pages/daily_task_screen.dart';
+import '../widgets/course_card.dart';
 import '../widgets/course_progress_card.dart';
-import '../widgets/daily_schedule_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -19,6 +21,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   /// We will store detailed journeys here
   Future<List<LearningJourney>>? _detailedJourneysFuture;
+  int _currentCourseIndex = 0;
 
   @override
   void initState() {
@@ -64,6 +67,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       body: Container(
+        
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -71,6 +75,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             colors: [Color(0xFF4338CA), Colors.white],
           ),
         ),
+        
         child: FutureBuilder<List<LearningJourney>>(
           future: _detailedJourneysFuture,
           builder: (context, snapshot) {
@@ -85,85 +90,87 @@ class _DashboardScreenState extends State<DashboardScreen> {
             final journeys = snapshot.data ?? [];
 
             if (journeys.isEmpty) {
-              return const Center(child: Text("No learning journeys yet"));
+              return const Center(child: Text("No learning journeys found."));
             }
-
+            
+            
             return SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // This is where the DailyScheduleCard will be added for each journey
-                  ...journeys.map((journey) {
-                    // This GestureDetector wraps the entire entry for a single journey
-                    return GestureDetector(
-                      onTap: () async {
-                        final fullJourney = await repository.getJourneyDetails(
-                          userId,
-                          journey.id,
-                        );
-
-                        if (!mounted) return;
-
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => GeneratedRoadmapScreen(
-                              journey: fullJourney,
-                              repository: repository,
-                              userId: userId,
+                  const SizedBox(height: 20),
+                  CarouselSlider.builder(
+                    itemCount: journeys.length,
+                    itemBuilder: (context, index, realIndex) {
+                      final journey = journeys[index];
+                      return CourseCard(
+                        journey: journey,
+                        onContinue: (subTopic) async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => DailyTaskScreen(
+                                subTopic: subTopic,
+                                journeyId: journey.id,
+                                userId: userId,
+                                repository: repository,
+                              ),
                             ),
-                          ),
-                        );
+                          );
 
-                        _reloadDashboard(); // refresh UI after returning
+                          if (result == true) {
+                            _reloadDashboard();
+                          }
+                        },
+                        onDailyTaskTapped: (subTopic) async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => DailyTaskScreen(
+                                subTopic: subTopic,
+                                journeyId: journey.id,
+                                userId: userId,
+                                repository: repository,
+                              ),
+                            ),
+                          );
+
+                          if (result == true) {
+                            _reloadDashboard();
+                          }
+                        },
+                      );
+                    },
+                    options: CarouselOptions(
+                      height: 400, // Adjust height to fit your CourseCard
+                      viewportFraction: 0.9,
+                      enlargeCenterPage: true,
+                      onPageChanged: (index, reason) {
+                        setState(() {
+                          _currentCourseIndex = index;
+                        });
                       },
-                      // Using a Column to stack the cards vertically
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CourseProgressCard(
-                            journey: journey,
-                            onContinue: () async {
-                              final fullJourney = await repository
-                                  .getJourneyDetails(userId, journey.id);
-
-                              if (!mounted) return;
-
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => GeneratedRoadmapScreen(
-                                    journey: fullJourney,
-                                    repository: repository,
-                                    userId: userId,
-                                  ),
-                                ),
-                              );
-
-                              _reloadDashboard(); // refresh UI after returning
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          // Title for the daily schedule
-                          const Text(
-                            "Your Journey at a Glance",
-                            style: TextStyle(
-                              color: Colors.black87,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          // Displaying the DailyScheduleCard here with the journey data
-                          DailyScheduleCard(journey: journey),
-                          const SizedBox(
-                            height: 30,
-                          ), // Spacing between journey sections
-                        ],
-                      ),
-                    );
-                  }),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(journeys.length, (index) {
+                      return Container(
+                        width: 8.0,
+                        height: 8.0,
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 10.0,
+                          horizontal: 4.0,
+                        ),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _currentCourseIndex == index
+                              ? const Color(0xFF4338CA)
+                              : Colors.grey.withOpacity(0.5),
+                        ),
+                      );
+                    }),
+                  ),
                 ],
               ),
             );

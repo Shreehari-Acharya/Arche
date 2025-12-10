@@ -7,8 +7,13 @@ enum ScheduleState { completed, active, locked }
 /// A widget that displays a horizontal daily schedule based on a learning journey.
 class DailyScheduleCard extends StatelessWidget {
   final LearningJourney journey;
+  final Function(SubTopic)? onItemTapped;
 
-  const DailyScheduleCard({super.key, required this.journey});
+  const DailyScheduleCard({
+    super.key,
+    required this.journey,
+    this.onItemTapped,
+  });
 
   // Helper to extract "Day X" and the title from a description
   Map<String, String> _parseDescription(String description) {
@@ -28,39 +33,35 @@ class DailyScheduleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Find the index of the first incomplete subtopic. This is our "active" lesson.
     final int activeIndex = journey.subTopics.indexWhere(
-      (topic) => !topic.isCompleted,
+      (st) => !st.isCompleted,
     );
 
     // Use a SingleChildScrollView to allow horizontal scrolling.
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      // Add padding to ensure cards don't stick to the screen edges.
-      padding: const EdgeInsets.symmetric(horizontal: 0.0),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Row(
         children: List.generate(journey.subTopics.length, (index) {
           final subTopic = journey.subTopics[index];
           final parsed = _parseDescription(subTopic.description);
-          final dayHeader = parsed['dayHeader']!;
-          final topicTitle = parsed['topicTitle']!;
+          final state = subTopic.isCompleted
+              ? ScheduleState.completed
+              : (index == activeIndex
+                    ? ScheduleState.active
+                    : ScheduleState.locked);
 
-          // Determine the state directly based on `isCompleted` and position.
-          ScheduleState state;
-          if (subTopic.isCompleted) {
-            // If the backend says it's complete, the state is 'completed'.
-            state = ScheduleState.completed;
-          } else if (index == activeIndex) {
-            // If it's not complete AND it's the first incomplete one, it's 'active'.
-            state = ScheduleState.active;
-          } else {
-            // If it's not complete and not the active one, it must be 'locked'.
-            state = ScheduleState.locked;
-          }
-
-          return _buildScrollableItem(
-            state: state,
-            dayHeader: dayHeader,
-            topicTitle: topicTitle,
-            subtext: state == ScheduleState.active ? "(Today)" : null,
+          return GestureDetector(
+            onTap: () {
+              if (onItemTapped != null) {
+                onItemTapped!(subTopic);
+              }
+            },
+            child: _buildScrollableItem(
+              state: state,
+              dayHeader: parsed['dayHeader']!,
+              topicTitle: parsed['topicTitle']!,
+              subtext: state == ScheduleState.active ? "Up Next" : null,
+            ),
           );
         }),
       ),
@@ -125,13 +126,6 @@ class _ScheduleItemCard extends StatelessWidget {
         color: backgroundColor,
         borderRadius: BorderRadius.circular(16.0),
         border: border,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(2, 0),
-          ),
-        ],
       ),
       child: Column(
         children: [

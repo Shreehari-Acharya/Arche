@@ -4,7 +4,7 @@ import 'dart:core';
 
 class CourseProgressCard extends StatelessWidget {
   final LearningJourney journey;
-  final VoidCallback? onContinue;
+  final Function(SubTopic)? onContinue;
 
   const CourseProgressCard({super.key, required this.journey, this.onContinue});
 
@@ -71,18 +71,7 @@ class CourseProgressCard extends StatelessWidget {
     final thumbnailUrl = _getYoutubeThumbnailUrl(videoResource?.url);
 
     return Container(
-      padding: const EdgeInsets.all(24.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.0), // rounded-2xl
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -118,53 +107,54 @@ class CourseProgressCard extends StatelessWidget {
     return SizedBox(
       width: 120, // A slightly wider thumbnail for a better 16:9 look
       height: 95,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            Positioned.fill(
-              child: ClipRRect(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12.0),
+              child: Container(
+                color: Colors.black,
+                child: thumbnailUrl != null
+                    ? Image.network(
+                        thumbnailUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.error_outline, color: Colors.red),
+                      )
+                    : const Icon(
+                        Icons.video_library_outlined,
+                        color: Colors.grey,
+                      ),
+              ),
+            ),
+          ),
+          // Semi-transparent overlay for better icon visibility
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12.0),
-                child: Container(
-                  color: Colors.black,
-                  child: thumbnailUrl != null
-                      ? Image.network(
-                          thumbnailUrl,
-                          fit:BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.error_outline, color: Colors.red),
-                        )
-                      : const Icon(Icons.video_library_outlined,
-                          color: Colors.grey),
-                ),
               ),
             ),
-            // Semi-transparent overlay for better icon visibility
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
+          ),
+          Positioned(
+            bottom: 4,
+            right: 4,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                duration,
+                style: const TextStyle(color: Colors.white, fontSize: 10),
               ),
             ),
-            Positioned(
-              bottom: 4,
-              right: 4,
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.8),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  duration,
-                  style: const TextStyle(color: Colors.white, fontSize: 10),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -181,7 +171,7 @@ class CourseProgressCard extends StatelessWidget {
               fontSize: 18,
             ),
           ),
-          const SizedBox(height:2),
+          const SizedBox(height: 2),
           Text(
             title,
             style: const TextStyle(
@@ -200,7 +190,7 @@ class CourseProgressCard extends StatelessWidget {
               fontSize: 12, // text-sm
               color: Color(0xFF6B7280), // text-gray-500
             ),
-            maxLines: 1
+            maxLines: 1,
           ),
         ],
       ),
@@ -212,7 +202,20 @@ class CourseProgressCard extends StatelessWidget {
       width: double.infinity,
 
       child: ElevatedButton(
-        onPressed: onContinue,
+        onPressed: () {
+          final nextSubTopic = journey.subTopics.firstWhere(
+            (st) => !st.isCompleted,
+            orElse: () => SubTopic(
+              id: '',
+              description: 'All lessons completed!',
+              isCompleted: false,
+              videoResources: [],
+            ),
+          );
+          if (onContinue != null && nextSubTopic.id.isNotEmpty) {
+            onContinue!(nextSubTopic);
+          }
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF4338CA), // bg-indigo-700
           foregroundColor: Colors.white,
@@ -242,7 +245,8 @@ class CourseProgressCard extends StatelessWidget {
           child: LinearProgressIndicator(
             value: progress,
             backgroundColor: const Color(0xFFE5E7EB), // bg-gray-200
-            valueColor: const AlwaysStoppedAnimation<Color>(Colors.green,
+            valueColor: const AlwaysStoppedAnimation<Color>(
+              Colors.green,
             ), // bg-teal-400
             minHeight: 8,
           ),

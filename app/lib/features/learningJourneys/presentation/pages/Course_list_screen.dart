@@ -134,7 +134,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                     padding: const EdgeInsets.only(bottom: 20),
                     child: CourseProgressCard(
                       journey: journey,
-                      onContinue: () async {
+                      onContinue: (subTopic) async {
                         // This is the same logic from your GestureDetector's onTap
                         try {
                           final detailed = await widget.repository
@@ -157,7 +157,9 @@ class _CourseListScreenState extends State<CourseListScreen> {
                         } catch (e) {
                           if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Failed to open course: $e")),
+                            SnackBar(
+                              content: Text("Failed to open course: $e"),
+                            ),
                           );
                         }
                       },
