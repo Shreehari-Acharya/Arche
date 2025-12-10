@@ -1,88 +1,68 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
-import 'processing_screen.dart';
 
-class SummarizeScreen extends StatefulWidget {
-  const SummarizeScreen({super.key});
+class NotesScreen extends StatefulWidget {
+  const NotesScreen({super.key});
 
   @override
-  State<SummarizeScreen> createState() => _SummarizeScreenState();
+  State<NotesScreen> createState() => _NotesScreenState();
 }
 
-class _SummarizeScreenState extends State<SummarizeScreen> {
-  String? _selectedFileName;
+class _NotesScreenState extends State<NotesScreen> {
+  final List<NoteModel> _notes = [];
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _contentController = TextEditingController();
 
-  // ================= FILE PICKER ==================
-  Future<void> _pickFile() async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'ppt', 'pptx'],
-      );
+  void _openAddNoteSheet() {
+    _titleController.clear();
+    _contentController.clear();
 
-      if (result != null && result.files.isNotEmpty) {
-        setState(() {
-          _selectedFileName = result.files.first.name;
-        });
-
-        // ---- Navigate to PROCESSING SCREEN ----
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ProcessingScreen(
-              fileName: _selectedFileName!,    // <-- FIXED
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      print("File picking failed: $e");
-    }
-  }
-
-  // ================= UI COMPONENTS =================
-  Widget _purpleCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFA46CFF), Color(0xFF617AFF)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(color: Colors.black12, blurRadius: 12, offset: Offset(0, 4))
-          ],
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            CircleAvatar(
-              radius: 28,
-              backgroundColor: Colors.white,
-              child: Icon(icon, color: Colors.deepPurple, size: 28),
+            const Text(
+              "Add Note",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            const SizedBox(height: 16),
+
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                hintText: "Title",
+                border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: const TextStyle(fontSize: 13, color: Colors.white70),
+            const SizedBox(height: 12),
+
+            TextField(
+              controller: _contentController,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                hintText: "Write your note here...",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _addNote,
+                child: const Text("Save Note"),
+              ),
             ),
           ],
         ),
@@ -90,93 +70,85 @@ class _SummarizeScreenState extends State<SummarizeScreen> {
     );
   }
 
-  Widget _uploadCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.deepPurple.withOpacity(0.3)),
-        color: Colors.white,
-      ),
-      child: Column(
-        children: [
-          const Icon(Icons.cloud_upload_outlined, color: Colors.deepPurple, size: 60),
-          const SizedBox(height: 16),
-          const Text(
-            "Drag & drop your file here",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 12),
+  void _addNote() {
+    if (_titleController.text.trim().isEmpty) return;
 
-          ElevatedButton(
-            onPressed: _pickFile,   // <-- FIXED CALL
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text("Browse Files"),
-          ),
+    setState(() {
+      _notes.add(
+        NoteModel(
+          title: _titleController.text.trim(),
+          content: _contentController.text.trim(),
+          createdAt: DateTime.now(),
+        ),
+      );
+    });
 
-          const SizedBox(height: 10),
-          const Text("PDF • PowerPoint", style: TextStyle(color: Colors.black54)),
-
-          if (_selectedFileName != null) ...[
-            const SizedBox(height: 20),
-            Text(
-              "Selected: $_selectedFileName",
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.deepPurple,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
+    Navigator.pop(context);
   }
 
-  // ================= MAIN UI ==================
+  void _deleteNote(int index) {
+    setState(() {
+      _notes.removeAt(index);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F2FF),
-      appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
-        elevation: 0,
-        title: const Text("Upload Your Study Material"),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _openAddNoteSheet,
+        child: const Icon(Icons.add),
       ),
 
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(child: _uploadCard()),
-            const SizedBox(height: 30),
+      body: _notes.isEmpty
+          ? const Center(
+              child: Text(
+                "No notes yet.\nTap + to add one!",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _notes.length,
+              itemBuilder: (context, index) {
+                final note = _notes[index];
 
-            _purpleCard(
-              icon: Icons.article,
-              title: "Smart Notes",
-              subtitle: "Auto-generated summaries",
-              onTap: () {},
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: ListTile(
+                    title: Text(
+                      note.title,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      note.content,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () => _deleteNote(index),
+                    ),
+                  ),
+                );
+              },
             ),
-            _purpleCard(
-              icon: Icons.calendar_month,
-              title: "Study Plans",
-              subtitle: "Personalized schedules",
-              onTap: () {},
-            ),
-            _purpleCard(
-              icon: Icons.quiz,
-              title: "Revision Quizzes",
-              subtitle: "Instant practice tests",
-              onTap: () {},
-            ),
-          ],
-        ),
-      ),
     );
   }
+}
+
+class NoteModel {
+  final String title;
+  final String content;
+  final DateTime createdAt;
+
+  NoteModel({
+    required this.title,
+    required this.content,
+    required this.createdAt,
+  });
 }

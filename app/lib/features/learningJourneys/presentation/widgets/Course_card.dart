@@ -1,66 +1,41 @@
 import 'package:flutter/material.dart';
 import '../../data/models/learning_journey_model.dart';
+import '../../../Dashboard/presentation/widgets/course_progress_card.dart';
 
+// This wrapper adapts the old CourseCard usage to the new CourseProgressCard.
 class CourseCard extends StatelessWidget {
   final LearningJourney journey;
   final VoidCallback? onTap;
 
   const CourseCard({super.key, required this.journey, this.onTap});
 
+  int _calculateStreak(List<SubTopic> topics) {
+    int streak = 0;
+    for (final t in topics) {
+      if (t.isCompleted) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.school,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      journey.topicName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Created: ${journey.createdAt}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.color?.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(Icons.chevron_right),
-            ],
-          ),
+    final total = journey.subTopics.length;
+    final completed = journey.subTopics.where((t) => t.isCompleted).length;
+    final streak = _calculateStreak(journey.subTopics);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: CourseProgressCard(
+          courseName: journey.topicName,
+          completed: completed,
+          total: total == 0 ? 1 : total,
+          streak: streak,
         ),
       ),
     );

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../learningJourneys/data/models/learning_journey_model.dart';
 import '../../../learningJourneys/data/repositories/learning_repository.dart';
 import '../../../auth/presentation/bloc/auth_local.dart';
-import '../../../learningJourneys/presentation/pages/Course_screen.dart'; 
+import '../../../learningJourneys/presentation/pages/Course_screen.dart';
 import '../widgets/course_progress_card.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -58,18 +58,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     if (_detailedJourneysFuture == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F4FF),
-
-      appBar: AppBar(
-        title: const Text("Dashboard"),
-        backgroundColor: Colors.deepPurple,
-      ),
 
       body: FutureBuilder<List<LearningJourney>>(
         future: _detailedJourneysFuture,
@@ -79,9 +72,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           }
 
           if (snapshot.hasError) {
-            return Center(
-              child: Text("Error: ${snapshot.error}"),
-            );
+            return Center(child: Text("Error: ${snapshot.error}"));
           }
 
           final journeys = snapshot.data ?? [];
@@ -107,8 +98,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       .where((t) => t.isCompleted)
                       .length;
 
-                  final double progress =
-                      total == 0 ? 0 : completed / total;
+                  final double progress = total == 0 ? 0 : completed / total;
 
                   final int streak = _calculateStreak(journey.subTopics);
 
