@@ -35,6 +35,7 @@ class _ProcessingScreenState extends State<ProcessingScreen>
         MaterialPageRoute(
           builder: (_) => DocumentViewScreen(
             fileName: widget.fileName,   // <-- PASS FILE NAME CORRECTLY
+            sectionsCount: 0,
           ),
         ),
       );

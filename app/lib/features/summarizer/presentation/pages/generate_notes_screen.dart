@@ -1,146 +1,90 @@
+// lib/features/summarizer/presentation/pages/generate_notes_screen.dart
 import 'package:flutter/material.dart';
+import 'generate_notes_loading_screen.dart';
 
 class GenerateNotesScreen extends StatelessWidget {
-  const GenerateNotesScreen({super.key});
+  final String fileName;
+  final int sectionsCount;
+
+  const GenerateNotesScreen({
+    super.key,
+    required this.fileName,
+    required this.sectionsCount,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F2FF),
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.black,
-        title: const Text(
-          "AI-Powered Notes",
-          style: TextStyle(color: Colors.black),
-        ),
+        backgroundColor: Colors.deepPurple,
+        title: const Text("Generate AI-Powered Notes"),
       ),
-
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // TOP ICON
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [Color(0xFFB57CFF), Color(0xFF6D82FF)],
+            const SizedBox(height: 8),
+            const Text(
+              "Our AI will analyze your document and create concise notes for each section.",
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+            Card(
+              shape:
+                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              child: Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.menu_book, size: 36, color: Colors.purple),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(fileName,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 6),
+                              Text("$sectionsCount sections",
+                                  style: const TextStyle(color: Colors.black54)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "What you'll get:\n• One-sentence summary per section\n• 3–6 key bullet points per section\n• Key terms and a downloadable version",
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  ],
                 ),
               ),
-              child: const Icon(
-                Icons.menu_book_rounded,
-                color: Colors.white,
-                size: 35,
-              ),
             ),
-
-            const SizedBox(height: 20),
-
-            const Text(
-              "Generate AI-Powered Notes",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+            const SizedBox(height: 26),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.auto_awesome),
+              label: const Text("Generate Notes Now"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               ),
-            ),
-
-            const SizedBox(height: 12),
-
-            const Text(
-              "Our AI will analyze each section of your document and create "
-              "concise notes with summaries, key points, and important terms.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.black54,
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // WHAT YOU GET BOX
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  )
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    "What you'll get:",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+              onPressed: () {
+                // Open loading screen which will navigate to result (mocked)
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => GenerateNotesLoadingScreen(
+                      fileName: fileName,
+                      sectionsCount: sectionsCount,
                     ),
                   ),
-                  SizedBox(height: 12),
-                  Row(children: [
-                    Text("• ", style: TextStyle(color: Colors.blue)),
-                    Expanded(
-                      child: Text("One-sentence summary per section"),
-                    ),
-                  ]),
-                  SizedBox(height: 6),
-                  Row(children: [
-                    Text("• ", style: TextStyle(color: Colors.blue)),
-                    Expanded(
-                      child: Text("4–6 key bullet points highlighting main concepts"),
-                    ),
-                  ]),
-                  SizedBox(height: 6),
-                  Row(children: [
-                    Text("• ", style: TextStyle(color: Colors.blue)),
-                    Expanded(
-                      child: Text("Essential terms with definitions"),
-                    ),
-                  ]),
-                  SizedBox(height: 6),
-                  Row(children: [
-                    Text("• ", style: TextStyle(color: Colors.blue)),
-                    Expanded(
-                      child: Text("Downloadable format for offline study"),
-                    ),
-                  ]),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // BUTTON
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  // later connect API
-                },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: const Color(0xFF6A4CFF),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  "Generate Notes Now",
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
+                );
+              },
             ),
           ],
         ),

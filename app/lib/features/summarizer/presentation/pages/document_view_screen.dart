@@ -1,276 +1,174 @@
 import 'package:flutter/material.dart';
-import 'generate_notes_screen.dart';   // ✅ REQUIRED IMPORT
 
-class DocumentViewScreen extends StatefulWidget {
+class DocumentViewScreen extends StatelessWidget {
   final String fileName;
+  final int sectionsCount;
 
-  const DocumentViewScreen({super.key, required this.fileName});
-
-  @override
-  State<DocumentViewScreen> createState() => _DocumentViewScreenState();
-}
-
-class _DocumentViewScreenState extends State<DocumentViewScreen> {
-  List<bool> _expanded = List.generate(5, (_) => false);
+  const DocumentViewScreen({
+    super.key,
+    required this.fileName,
+    required this.sectionsCount,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // SAFETY CHECKS → Prevent null errors
+    final safeFileName = fileName.isNotEmpty ? fileName : "Untitled Document";
+    final safeSections = sectionsCount >= 0 ? sectionsCount : 0;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F4FF),
+      backgroundColor: const Color(0xFFF6F2FF),
 
       appBar: AppBar(
+        backgroundColor: Colors.deepPurple,
         elevation: 0,
-        backgroundColor: Colors.transparent,
-        automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black87),
-              onPressed: () => Navigator.pop(context),
-            ),
-            const Text(
-              "Back to Documents",
-              style: TextStyle(color: Colors.black87, fontSize: 16),
-            ),
-          ],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
         ),
+        title: const Text("Back to Documents"),
       ),
 
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-            // ------------------------------------------------------------
-            // FILE HEADER CARD
-            // ------------------------------------------------------------
+            //
+            // DOCUMENT CARD
+            //
             Container(
-              padding: const EdgeInsets.all(22),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.07),
-                    blurRadius: 15,
-                    offset: const Offset(0, 6),
-                  ),
+                    color: Colors.black12,
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  )
                 ],
               ),
+
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [Color(0xFFB57CFF), Color(0xFF6D82FF)],
+                    height: 64,
+                    width: 64,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF9B7CFF), Color(0xFF7C9BFF)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                     ),
-                    child: const Icon(Icons.menu_book_rounded, color: Colors.white, size: 28),
+                    child: const Icon(Icons.menu_book,
+                        color: Colors.white, size: 36),
                   ),
-                  const SizedBox(width: 18),
+                  const SizedBox(width: 14),
+
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.fileName,
+                          safeFileName,
                           style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          "$safeSections sections extracted",
+                          style: const TextStyle(color: Colors.black54),
                         ),
                         const SizedBox(height: 6),
                         const Text(
-                          "5 sections extracted  •  PPTX",
-                          style: TextStyle(color: Colors.black54, fontSize: 13),
-                        ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          "Your document has been processed and organized "
-                          "into sections. Choose a study tool below to get started.",
-                          style: TextStyle(color: Colors.black87, fontSize: 13),
+                          "PPTX",
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.black45),
                         ),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 25),
+            const SizedBox(height: 22),
 
-            // ------------------------------------------------------------
-            // DOCUMENT SECTIONS
-            // ------------------------------------------------------------
-            const Text(
-              "Document Sections",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-
-            ...List.generate(
-              5,
-              (index) => _sectionCard(
-                index: index,
-                title: [
-                  "Introduction to Python Programming",
-                  "Variables and Data Types",
-                  "Control Flow: Conditionals",
-                  "Loops and Iteration",
-                  "Functions and Modules"
-                ][index],
-                pages: ["Pages 1,2", "Pages 3,4,5", "Pages 6,7", "Pages 8,9,10", "Pages 11,12,13"][index],
+            //
+            // SECTION TITLE
+            //
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "Document Sections",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
             ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 12),
 
-            // ------------------------------------------------------------
-            // STUDY TOOLS
-            // ------------------------------------------------------------
-            const Text(
-              "Study Tools",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-
-            _toolCard(
-              icon: Icons.menu_book_rounded,
-              title: "Generate Smart Notes",
-              subtitle: "AI-powered summaries and key points",
-              buttonLabel: "Generate Notes",
-              color: const Color(0xFF397BFF),
-
-              // ✅ FIXED NAVIGATION
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const GenerateNotesScreen(),
+            //
+            // SECTION LIST (SAFE)
+            //
+            Column(
+              children: List.generate(
+                safeSections,
+                (i) => Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.deepPurple.shade50,
+                        child: Text(
+                          "${i + 1}",
+                          style: const TextStyle(color: Colors.deepPurple),
+                        ),
+                      ),
+                      title: Text("Section ${i + 1} title"),
+                      subtitle: Text("Pages ${i * 2 + 1}, ${i * 2 + 2}"),
+                      trailing: const Icon(Icons.keyboard_arrow_down),
+                    ),
                   ),
-                );
-              },
+                ),
+              ),
             ),
 
-            _toolCard(
-              icon: Icons.calendar_month,
-              title: "Create Study Plan",
-              subtitle: "Personalized day-by-day learning schedule",
-              buttonLabel: "Create Plan",
-              color: const Color(0xFF914BFF),
-            ),
-            _toolCard(
-              icon: Icons.flash_on,
-              title: "Generate Quiz",
-              subtitle: "Instant revision quizzes",
-              buttonLabel: "Generate Quiz",
-              color: const Color(0xFFFF006E),
-            ),
-            _toolCard(
-              icon: Icons.video_collection_rounded,
-              title: "Video Resources",
-              subtitle: "Useful videos for each topic",
-              buttonLabel: "Browse Videos",
-              color: const Color(0xFF535CFF),
+            const SizedBox(height: 20),
+
+            //
+            // BUTTON → Generate Notes
+            //
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  // You must pass correct params here
+                  Navigator.pushNamed(
+                    context,
+                    "/generateNotes",
+                    arguments: {
+                      "fileName": safeFileName,
+                      "sectionsCount": safeSections,
+                    },
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                  backgroundColor: Colors.deepPurple,
+                ),
+                child: const Text("Generate Notes",
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // ================================================================
-  // SECTION CARD
-  // ================================================================
-  Widget _sectionCard({required int index, required String title, required String pages}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 12,
-            color: Colors.black.withOpacity(0.05),
-          )
-        ],
-      ),
-      child: ExpansionTile(
-        initiallyExpanded: _expanded[index],
-        onExpansionChanged: (v) {
-          setState(() => _expanded[index] = v);
-        },
-        leading: CircleAvatar(
-          radius: 18,
-          backgroundColor: const Color(0xFFB57CFF),
-          child: Text("${index + 1}", style: const TextStyle(color: Colors.white)),
-        ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(pages, style: const TextStyle(color: Colors.black54)),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              "This is the extracted text for $title.\n"
-              "Replace this with real section content.",
-              style: const TextStyle(color: Colors.black87),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ================================================================
-  // TOOL CARD
-  // ================================================================
-  Widget _toolCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required String buttonLabel,
-    required Color color,
-    VoidCallback? onPressed,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 18),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 12,
-            color: Colors.black.withOpacity(0.05),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 40, color: color),
-          const SizedBox(height: 12),
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(color: Colors.black54)),
-          const SizedBox(height: 14),
-          ElevatedButton(
-            onPressed: onPressed,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: color,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: Center(
-              child: Text(buttonLabel, style: const TextStyle(color: Colors.white, fontSize: 15)),
-            ),
-          ),
-        ],
       ),
     );
   }
