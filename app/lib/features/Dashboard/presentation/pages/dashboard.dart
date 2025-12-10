@@ -4,6 +4,7 @@ import '../../../learningJourneys/data/repositories/learning_repository.dart';
 import '../../../auth/presentation/bloc/auth_local.dart';
 import '../../../learningJourneys/presentation/pages/Course_screen.dart';
 import '../widgets/course_progress_card.dart';
+import '../widgets/daily_schedule_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -62,99 +63,112 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F4FF),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF4338CA), Colors.white],
+          ),
+        ),
+        child: FutureBuilder<List<LearningJourney>>(
+          future: _detailedJourneysFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-      body: FutureBuilder<List<LearningJourney>>(
-        future: _detailedJourneysFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+            if (snapshot.hasError) {
+              return Center(child: Text("Error: ${snapshot.error}"));
+            }
 
-          if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          }
+            final journeys = snapshot.data ?? [];
 
-          final journeys = snapshot.data ?? [];
+            if (journeys.isEmpty) {
+              return const Center(child: Text("No learning journeys yet"));
+            }
 
-          if (journeys.isEmpty) {
-            return const Center(child: Text("No learning journeys yet"));
-          }
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // This is where the DailyScheduleCard will be added for each journey
+                  ...journeys.map((journey) {
+                    // This GestureDetector wraps the entire entry for a single journey
+                    return GestureDetector(
+                      onTap: () async {
+                        final fullJourney = await repository.getJourneyDetails(
+                          userId,
+                          journey.id,
+                        );
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                
-                ...journeys.map((journey) {
-                  final total = journey.subTopics.length;
-                  final completed = journey.subTopics
-                      .where((t) => t.isCompleted)
-                      .length;
+                        if (!mounted) return;
 
-                  final double progress = total == 0 ? 0 : completed / total;
-
-                  final int streak = _calculateStreak(journey.subTopics);
-
-                  return GestureDetector(
-                    onTap: () async {
-                      final fullJourney = await repository.getJourneyDetails(
-                        userId,
-                        journey.id,
-                      );
-
-                      if (!mounted) return;
-
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => GeneratedRoadmapScreen(
-                            journey: fullJourney,
-                            repository: repository,
-                            userId: userId,
-                          ),
-                        ),
-                      );
-
-                      _reloadDashboard(); // refresh UI after returning
-                    },
-
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: CourseProgressCard(
-                        journey: journey,
-                        onContinue: () async {
-                          final fullJourney = await repository.getJourneyDetails(
-                            userId,
-                            journey.id,
-                          );
-
-                          if (!mounted) return;
-
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => GeneratedRoadmapScreen(
-                                journey: fullJourney,
-                                repository: repository,
-                                userId: userId,
-                              ),
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => GeneratedRoadmapScreen(
+                              journey: fullJourney,
+                              repository: repository,
+                              userId: userId,
                             ),
-                          );
+                          ),
+                        );
 
-                          _reloadDashboard(); // refresh UI after returning
-                        },
+                        _reloadDashboard(); // refresh UI after returning
+                      },
+                      // Using a Column to stack the cards vertically
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CourseProgressCard(
+                            journey: journey,
+                            onContinue: () async {
+                              final fullJourney = await repository
+                                  .getJourneyDetails(userId, journey.id);
+
+                              if (!mounted) return;
+
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => GeneratedRoadmapScreen(
+                                    journey: fullJourney,
+                                    repository: repository,
+                                    userId: userId,
+                                  ),
+                                ),
+                              );
+
+                              _reloadDashboard(); // refresh UI after returning
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          // Title for the daily schedule
+                          const Text(
+                            "Your Journey at a Glance",
+                            style: TextStyle(
+                              color: Colors.black87,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          // Displaying the DailyScheduleCard here with the journey data
+                          DailyScheduleCard(journey: journey),
+                          const SizedBox(
+                            height: 30,
+                          ), // Spacing between journey sections
+                        ],
                       ),
-                    ),
-                  );
-                }),
-
-                const SizedBox(height: 20),
-              ],
-            ),
-          );
-        },
+                    );
+                  }),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

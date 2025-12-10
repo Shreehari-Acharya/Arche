@@ -223,7 +223,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         const Text("How many hours per day?"),
         SliderTheme(
           data: SliderTheme.of(context).copyWith(
-            showValueIndicator: ShowValueIndicator.always, // always show popup
+            showValueIndicator: ShowValueIndicator.onDrag, // always show popup
           ),
           child: Slider(
             value: studyHours.toDouble(),

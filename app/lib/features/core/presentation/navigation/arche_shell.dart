@@ -80,7 +80,10 @@ class _ArcheShellState extends State<ArcheShell> {
       appBar: AppBar(
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: const Text('Arche'),
+        title: Image.asset(
+          'lib/assets/logo.png',
+          height: 25, // Adjust the height as needed
+        ),
       ),
 
       body: _buildBody(),
