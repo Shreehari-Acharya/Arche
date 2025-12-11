@@ -30,9 +30,10 @@ async function newLearningJourney(req, res) {
     if (!topicName || !skillLevel || !language || !hoursPerDay || !monthsToComplete || !userId) {
       return res.status(400).json({ error: "All fields are required." });
     }
-
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
     const learningJourney = await prisma.learningJourney.create({
-      data: { topicName, userId },
+      data: { topicName, userId, lastAccessed: yesterday },
     });
 
     await prisma.learningPreference.create({

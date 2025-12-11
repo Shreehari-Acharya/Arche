@@ -12,6 +12,8 @@
 //             "userId": "cmi4kz1610000ijnmm3jun0l9",
 //             "createdAt": "2025-11-24T14:31:22.095Z",
 //             "updatedAt": "2025-11-24T14:31:22.095Z"
+//             "lastAccessed":"2025-12-11T15:10:03.526Z",
+//             "streakCount":1
 //         }
 //     ]
 // }
