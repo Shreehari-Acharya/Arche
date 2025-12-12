@@ -66,8 +66,10 @@ async function createQuiz(req, res) {
             });
         }
     } catch (error) {
+        // Log the detailed error to the server console
         console.error("Error in createQuiz:", error);
-        return res.status(500).json({ error: "Internal server error." });
+        // Send a more descriptive error message in the response
+        return res.status(500).json({ error: "Internal server error.", details: error.message });
     }
 }
 

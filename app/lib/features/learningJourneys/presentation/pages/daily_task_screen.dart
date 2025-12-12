@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../quiz/presentation/pages/quiz_screen.dart';
 import '../../data/models/learning_journey_model.dart';
 import '../../data/repositories/learning_repository.dart';
 
-class DailyTaskScreen extends StatelessWidget {
+class DailyTaskScreen extends StatefulWidget {
   final SubTopic subTopic;
   final String journeyId;
   final String userId;
@@ -18,12 +19,27 @@ class DailyTaskScreen extends StatelessWidget {
   });
 
   @override
+  State<DailyTaskScreen> createState() => _DailyTaskScreenState();
+}
+
+class _DailyTaskScreenState extends State<DailyTaskScreen> {
+  late bool _isQuizPassed;
+
+  @override
+  void initState() {
+    super.initState();
+    // The button is enabled ONLY if the task was already completed.
+    // Otherwise, it starts as disabled, forcing the user to pass the quiz.
+    _isQuizPassed = widget.subTopic.isCompleted;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final parts = subTopic.description.split(':');
+    final parts = widget.subTopic.description.split(':');
     final String title = parts.isNotEmpty ? parts.first : "Daily Task";
     final String subtitle = parts.length > 1
         ? parts.sublist(1).join(':').trim()
-        : subTopic.description;
+        : widget.subTopic.description;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF3F0FF),
@@ -40,30 +56,25 @@ class DailyTaskScreen extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           const SizedBox(height: 10),
-
           const Text(
             "Today's Learning Goals 🔥",
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-
           Text(
             subtitle,
             style: const TextStyle(color: Colors.black54, fontSize: 16),
           ),
-
           const SizedBox(height: 25),
 
           /// ✅ VIDEO LIST
-          if (subTopic.videoResources.isEmpty)
+          if (widget.subTopic.videoResources.isEmpty)
             const Padding(
               padding: EdgeInsets.all(20),
-              child: Center(
-                child: Text("No videos found for this topic."),
-              ),
+              child: Center(child: Text("No videos found for this topic.")),
             )
           else
-            ...subTopic.videoResources.map(
+            ...widget.subTopic.videoResources.map(
               (video) => _taskCard(
                 context: context,
                 icon: Icons.play_circle_fill,
@@ -76,15 +87,56 @@ class DailyTaskScreen extends StatelessWidget {
 
           const SizedBox(height: 30),
 
+          /// ✅ TAKE QUIZ BUTTON
+          GestureDetector(
+            onTap: () async {
+              // Navigate to the quiz and wait for a result.
+              final result = await Navigator.push<bool>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      QuizScreen(subTopicId: widget.subTopic.id),
+                ),
+              );
+
+              // If the quiz was passed (result is true), update the state to enable the button.
+              if (result == true) {
+                setState(() {
+                  _isQuizPassed = true;
+                });
+              }
+            },
+            child: Container(
+              height: 52,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                color: const Color(0xFF6A5AE0),
+              ),
+              child: const Center(
+                child: Text(
+                  "Take Quiz",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
           /// ✅ MARK AS COMPLETE BUTTON
           GestureDetector(
-            onTap: subTopic.isCompleted
-                ? null
-                : () async {
+            // The button's onTap is null (disabled) if the quiz is not passed.
+            onTap: _isQuizPassed
+                ? () async {
                     try {
-                      await repository.markTaskComplete(
-                        journeyId: journeyId,
-                        subTopicId: subTopic.id,
+                      await widget.repository.markTaskComplete(
+                        journeyId: widget.journeyId,
+                        subTopicId: widget.subTopic.id,
                       );
 
                       if (!context.mounted) return;
@@ -94,35 +146,31 @@ class DailyTaskScreen extends StatelessWidget {
                           content: Text("✅ Task marked as complete"),
                         ),
                       );
-
-                      /// ✅ SEND SUCCESS SIGNAL BACK TO ROADMAP
                       Navigator.pop(context, true);
                     } catch (e) {
                       if (!context.mounted) return;
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("❌ Failed: $e"),
-                        ),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text("❌ Failed: $e")));
                     }
-                  },
+                  }
+                : null,
             child: Container(
               height: 52,
               width: double.infinity,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(30),
-                gradient: subTopic.isCompleted
+                // The style changes to grey if the button is disabled.
+                gradient: _isQuizPassed
                     ? const LinearGradient(
-                        colors: [Colors.grey, Colors.grey],
-                      )
-                    : const LinearGradient(
                         colors: [Color(0xFF4A8CFF), Color(0xFF9B4CFF)],
-                      ),
+                      )
+                    : null,
+                color: _isQuizPassed ? null : Colors.grey[400],
               ),
               child: Center(
                 child: Text(
-                  subTopic.isCompleted
+                  widget.subTopic.isCompleted
                       ? "✅ Already Completed"
                       : "Mark Day as Complete",
                   style: const TextStyle(
@@ -134,7 +182,6 @@ class DailyTaskScreen extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 20),
         ],
       ),
@@ -161,7 +208,7 @@ class DailyTaskScreen extends StatelessWidget {
             color: Colors.black.withOpacity(0.05),
             blurRadius: 14,
             offset: const Offset(0, 6),
-          )
+          ),
         ],
       ),
       child: InkWell(
@@ -202,8 +249,7 @@ class DailyTaskScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style:
-                        const TextStyle(fontSize: 13, color: Colors.black54),
+                    style: const TextStyle(fontSize: 13, color: Colors.black54),
                   ),
                 ],
               ),

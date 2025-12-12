@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'features/quiz/data/repositories/quiz_repository.dart';
 import 'home_page.dart';
 import 'features/auth/presentation/pages/login.dart';
 import 'features/auth/presentation/pages/signup.dart';
@@ -31,38 +32,48 @@ class ArcheApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
+    return MultiRepositoryProvider(
       providers: [
-        BlocProvider(
-          create: (_) => AuthBloc(
-            registerUseCase: RegisterUseCase(repository: authRepository),
-            loginUseCase: LoginUseCase(repository: authRepository),
-          ),
-        ),
+        RepositoryProvider.value(value: authRepository),
+        RepositoryProvider(create: (context) => QuizRepository()),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          textTheme: GoogleFonts.robotoTextTheme(),
-          // OR for Inter:
-          // textTheme: GoogleFonts.interTextTheme(),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (context) => AuthBloc(
+              registerUseCase: RegisterUseCase(
+                repository: context.read<AuthRepositoryImpl>(),
+              ),
+              loginUseCase: LoginUseCase(
+                repository: context.read<AuthRepositoryImpl>(),
+              ),
+            ),
+          ),
+        ],
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            textTheme: GoogleFonts.robotoTextTheme(),
+            // OR for Inter:
+            // textTheme: GoogleFonts.interTextTheme(),
+          ),
+
+          // ----------------------------------------------------
+          // FIRST PAGE SHOWN WHEN APP OPENS
+          // ----------------------------------------------------
+          home: const HomePage(),
+
+          // ----------------------------------------------------
+          // NAVIGATION ROUTES
+          // ----------------------------------------------------
+          routes: {
+            '/login': (_) => const LoginPage(),
+            '/register': (_) => const SignUpScreen(),
+
+            // After login / signup → go to main app shell
+            '/arche': (_) => const ArcheShell(),
+          },
         ),
-
-        // ----------------------------------------------------
-        // FIRST PAGE SHOWN WHEN APP OPENS
-        // ----------------------------------------------------
-        home: const HomePage(),
-
-        // ----------------------------------------------------
-        // NAVIGATION ROUTES
-        // ----------------------------------------------------
-        routes: {
-          '/login': (_) => const LoginPage(),
-          '/register': (_) => const SignUpScreen(),
-
-          // After login / signup → go to main app shell
-          '/arche': (_) => const ArcheShell(),
-        },
       ),
     );
   }
