@@ -149,7 +149,7 @@ class _GeneratedRoadmapScreenState extends State<GeneratedRoadmapScreen> {
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
 
-                          subtitle: Text(task.description),
+                          subtitle: Text(task.description, maxLines: 2, overflow: TextOverflow.ellipsis,),
 
                           trailing: const Icon(Icons.chevron_right),
 

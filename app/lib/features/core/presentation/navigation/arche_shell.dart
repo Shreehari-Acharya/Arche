@@ -1,7 +1,7 @@
 import 'package:app/features/Dashboard/presentation/pages/dashboard.dart';
 import 'package:flutter/material.dart';
 import '../../../learningJourneys/presentation/pages/Course_list_screen.dart';
-import '../../../summarizer/presentation/pages/summarize_screen.dart';
+import '../../../summarizer/presentation/pages/summarizer_screen.dart';
 import 'arche_bottom_nav.dart';
 import '../../../learningJourneys/presentation/pages/user_Prefernce.dart';
 import '../../../learningJourneys/data/repositories/learning_repository.dart';
@@ -49,7 +49,7 @@ class _ArcheShellState extends State<ArcheShell> {
       case 2:
         return const OnboardingScreen();
       case 3:
-        return const SummarizeScreen();
+        return const SummarizerScreen();
       default:
         return const DashboardScreen();
     }

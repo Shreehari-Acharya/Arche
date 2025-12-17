@@ -49,7 +49,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
     });
   }
 
-  int _calculateStreak(List<SubTopic> topics) {
+  /*int _calculateStreak(List<SubTopic> topics) {
     int streak = 0;
     for (final t in topics) {
       if (t.isCompleted) {
@@ -59,7 +59,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
       }
     }
     return streak;
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
@@ -97,11 +97,11 @@ class _CourseListScreenState extends State<CourseListScreen> {
               itemCount: journeys.length,
               itemBuilder: (context, index) {
                 final journey = journeys[index];
-                final total = journey.subTopics.length;
+                /*final total = journey.subTopics.length;
                 final completed = journey.subTopics
                     .where((t) => t.isCompleted)
                     .length;
-                final streak = _calculateStreak(journey.subTopics);
+                final streak = _calculateStreak(journey.subTopics);*/
 
                 return GestureDetector(
                   onTap: () async {
