@@ -26,27 +26,10 @@ class HomePage extends StatelessWidget {
                 const SizedBox(height: 20),
                 Column(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF6A5AE0), Color(0xFF9C4BFF)],
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.auto_graph,
-                        size: 40,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      "Arche",
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    Image.asset(
+                      'lib/assets/logo.png',
+                      height: 50,
+                      fit: BoxFit.contain,
                     ),
                   ],
                 ),
@@ -77,13 +60,17 @@ class HomePage extends StatelessWidget {
                     );
                   },
                   child: Container(
-                    width: 180,
-                    height: 48,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF4A8CFF), Color(0xFF9B4CFF)],
-                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      color: const Color(0xFF4338CA),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
                     ),
                     child: const Center(
                       child: Text(
@@ -99,7 +86,8 @@ class HomePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 GestureDetector(
-                  onTap: () {Navigator.push(
+                  onTap: () {
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const LoginPage(),
@@ -107,16 +95,15 @@ class HomePage extends StatelessWidget {
                     );
                   },
                   child: Container(
-                    width: 180,
-                    height: 48,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(30),
+                      borderRadius: BorderRadius.circular(18),
                       color: Colors.white,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: Offset(0, 4),
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
@@ -124,7 +111,7 @@ class HomePage extends StatelessWidget {
                       child: Text(
                         "Sign In",
                         style: TextStyle(
-                          color: Colors.black87,
+                          color: Color(0xFF4338CA),
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -133,28 +120,8 @@ class HomePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 22),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(
-                      Icons.picture_as_pdf,
-                      size: 18,
-                      color: Color(0xFF8566FF),
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      "Try Study Companion (Upload PDFs/PPTs)",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF6A5AE0),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(width: 6),
-                    Icon(Icons.arrow_right_alt, color: Color(0xFF6A5AE0)),
-                  ],
-                ),
-                const SizedBox(height: 35),
+                
+                
                 const FeatureCard(
                   icon: Icons.menu_book,
                   title: "Topic-based resource discovery",
@@ -167,19 +134,7 @@ class HomePage extends StatelessWidget {
                   title: "AI study planner + smart notes",
                   subtitle: "Intelligent planning & note-taking powered by AI",
                 ),
-                const SizedBox(height: 16),
-                const FeatureCard(
-                  icon: Icons.flash_on,
-                  title: "Instant revision system",
-                  subtitle: "Quick quizzes & tests to reinforce learning",
-                ),
-                const SizedBox(height: 16),
-                const FeatureCard(
-                  icon: Icons.calendar_today,
-                  title: "Daily reminders & streaks",
-                  subtitle: "Stay consistent with smart reminders",
-                ),
-                const SizedBox(height: 40),
+                
               ],
             ),
           ),
@@ -223,9 +178,7 @@ class FeatureCard extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              gradient: const LinearGradient(
-                colors: [Color(0xFF7A6BFF), Color(0xFFB36CFF)],
-              ),
+              color: const Color(0xFF4338CA),
             ),
             child: Icon(icon, color: Colors.white, size: 26),
           ),

@@ -34,13 +34,23 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFF5F3FF), Color(0xFFEFF1FF)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
               
               // -----------------------------
               // HEADER
@@ -48,19 +58,10 @@ class _LoginPageState extends State<LoginPage> {
               Center(
                 child: Column(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF6A5AE0), Color(0xFF9C4BFF)],
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.auto_graph,
-                        size: 40,
-                        color: Colors.white,
-                      ),
+                    Image.asset(
+                      'lib/assets/logo.png',
+                      height: 45,
+                      fit: BoxFit.contain,
                     ),
                     const SizedBox(height: 12),
                     const Text(
@@ -118,8 +119,13 @@ class _LoginPageState extends State<LoginPage> {
                 },
                 listener: (context, state) {
                   if (state is AuthSuccess) {
-                    // 🔥 FIXED — No more /dashboard route crash
-                    Navigator.pushReplacementNamed(context, '/arche');
+                    // Clear all previous routes and go to app shell
+                    // This prevents back navigation to login/signup pages
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/arche',
+                      (route) => false,
+                    );
                   } else if (state is AuthFailure) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(state.error)),
@@ -136,7 +142,7 @@ class _LoginPageState extends State<LoginPage> {
               LoginPrompt(
                 text: "Don't have an account? Create account",
                 onTap: () {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
                       builder: (context) => const SignUpScreen(),
@@ -146,7 +152,9 @@ class _LoginPageState extends State<LoginPage> {
               ),
 
               const SizedBox(height: 20),
-            ],
+                ],
+              ),
+            ),
           ),
         ),
       ),
