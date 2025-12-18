@@ -8,12 +8,13 @@ const youtube = google.youtube({
     auth: process.env.GOOGLE_YT_API_KEY,
 })
 
-async function searchYouTube(query, maxResults = 10) {
+async function searchYouTube(query, maxResults) {
     const response = await youtube.search.list({
         part: ["snippet"],
         q: query,
         maxResults: maxResults,
         type: ["video"],
+        videoDuration: "long", // only long videos
     })
     return response.data.items
 }

@@ -49,7 +49,7 @@ async function newLearningJourney(req, res) {
 
     const roadmap = await roadmapAgent(
       topicName,
-      `${hoursPerDay} hours per day for ${monthsToComplete} months`
+      `${hoursPerDay} hours per day for ${monthsToComplete} Weeks`,
     );
 
     const subTopicsData = await prisma.subTopic.createManyAndReturn({
