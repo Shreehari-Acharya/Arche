@@ -13,11 +13,11 @@ class OnboardingScreen extends StatefulWidget {
 double _mapTimePeriodToMonths(String period) {
   switch (period) {
     case '1 Week':
-      return 0.25;
-    case '2 Weeks':
-      return 0.5;
-    case '1 Month':
       return 1.0;
+    case '2 Weeks':
+      return 2.0;
+    case '4 Weeks':
+      return 4.0;
     default:
       return 1.0;
   }
