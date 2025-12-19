@@ -28,10 +28,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late final DocumentRepositoryImpl _documentRepository;
   late final ChatRepositoryImpl _chatRepository;
 
-  /// We will store detailed journeys here
   Future<List<LearningJourney>>? _detailedJourneysFuture;
   Future<List<Document>>? _documentHistoryFuture;
-  int _currentCourseIndex = 0;
+  final ValueNotifier<int> _currentCourseIndex = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -60,10 +59,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  /// 🔥 Loads ALL journeys + fetches full details for each
   Future<List<LearningJourney>> _loadDetailedJourneys() async {
     final journeys = await repository.getAllJourneys(userId);
-
     List<LearningJourney> detailed = [];
 
     for (final j in journeys) {
@@ -74,7 +71,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return detailed;
   }
 
-  /// Load document history for summaries
   Future<List<Document>> _loadDocumentHistory() async {
     try {
       return await _documentRepository.getDocumentHistory(userId);
@@ -91,7 +87,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  /// Check if all subtopics in a journey are completed
   bool _isJourneyCompleted(LearningJourney journey) {
     if (journey.subTopics.isEmpty) return false;
     return journey.subTopics.every((subTopic) => subTopic.isCompleted);
@@ -99,21 +94,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _openSummary(Document document) async {
     try {
-      // Show loading
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
-      // Fetch the summary
       final summary = await _documentRepository.getSummary(document.id, userId);
 
       if (mounted) {
-        // Close loading dialog
         Navigator.of(context).pop();
-
-        // Navigate to summary page
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => SummaryPage(
@@ -128,7 +118,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     } catch (e) {
       if (mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
+        Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to load summary: $e'),
@@ -141,6 +131,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   void dispose() {
+    _currentCourseIndex.dispose();
     _httpClient.close();
     super.dispose();
   }
@@ -160,7 +151,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             colors: [Color(0xFF4338CA), Colors.white],
           ),
         ),
-
         child: FutureBuilder<List<dynamic>>(
           future: Future.wait([
             _detailedJourneysFuture!,
@@ -179,12 +169,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 snapshot.data?[0] as List<LearningJourney>? ?? [];
             final documentHistory = snapshot.data?[1] as List<Document>? ?? [];
 
-            // Filter out completed journeys
             final activeJourneys = allJourneys
                 .where((journey) => !_isJourneyCompleted(journey))
                 .toList();
 
             return SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -244,10 +234,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 ),
                               );
-
-                              if (result == true) {
-                                _reloadDashboard();
-                              }
+                              if (result == true) _reloadDashboard();
                             },
                             onDailyTaskTapped: (subTopic) async {
                               final result = await Navigator.push(
@@ -261,10 +248,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   ),
                                 ),
                               );
-
-                              if (result == true) {
-                                _reloadDashboard();
-                              }
+                              if (result == true) _reloadDashboard();
                             },
                           ),
                         ],
@@ -293,10 +277,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                 );
-
-                                if (result == true) {
-                                  _reloadDashboard();
-                                }
+                                if (result == true) _reloadDashboard();
                               },
                               onDailyTaskTapped: (subTopic) async {
                                 final result = await Navigator.push(
@@ -310,10 +291,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                 );
-
-                                if (result == true) {
-                                  _reloadDashboard();
-                                }
+                                if (result == true) _reloadDashboard();
                               },
                             );
                           },
@@ -321,36 +299,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             height: 400,
                             viewportFraction: 0.9,
                             enlargeCenterPage: true,
-                            enableInfiniteScroll: false,
+                            enableInfiniteScroll: true,
                             autoPlay: false,
+                            scrollDirection: Axis.horizontal,
+                            pageSnapping: true,
+                            padEnds: true,
                             onPageChanged: (index, reason) {
-                              setState(() {
-                                _currentCourseIndex = index;
-                              });
+                              _currentCourseIndex.value = index;
                             },
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(activeJourneys.length, (
-                            index,
-                          ) {
-                            return Container(
-                              width: 8.0,
-                              height: 8.0,
-                              margin: const EdgeInsets.symmetric(
-                                vertical: 10.0,
-                                horizontal: 4.0,
-                              ),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: _currentCourseIndex == index
-                                    ? const Color(0xFF4338CA)
-                                    : Colors.grey.withOpacity(0.5),
-                              ),
+                        ValueListenableBuilder<int>(
+                          valueListenable: _currentCourseIndex,
+                          builder: (context, currentIndex, child) {
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(activeJourneys.length, (
+                                index,
+                              ) {
+                                return Container(
+                                  width: 8.0,
+                                  height: 8.0,
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 10.0,
+                                    horizontal: 4.0,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: currentIndex == index
+                                        ? const Color(0xFF4338CA)
+                                        : Colors.grey.withOpacity(0.5),
+                                  ),
+                                );
+                              }),
                             );
-                          }),
+                          },
                         ),
                       ],
                     ),
