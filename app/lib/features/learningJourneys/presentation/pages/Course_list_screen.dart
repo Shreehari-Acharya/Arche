@@ -40,7 +40,27 @@ class _CourseListScreenState extends State<CourseListScreen> {
       final full = await widget.repository.getJourneyDetails(userId, j.id);
       detailed.add(full);
     }
+
+    // Sort journeys: incomplete courses by most recent first, then completed courses
+    detailed.sort((a, b) {
+      final aCompleted = _isJourneyCompleted(a);
+      final bCompleted = _isJourneyCompleted(b);
+
+      // If completion status differs, incomplete comes first
+      if (aCompleted != bCompleted) {
+        return aCompleted ? 1 : -1;
+      }
+
+      // If both have same completion status, sort by createdAt (most recent first)
+      return b.createdAt.compareTo(a.createdAt);
+    });
+
     return detailed;
+  }
+
+  bool _isJourneyCompleted(LearningJourney journey) {
+    if (journey.subTopics.isEmpty) return false;
+    return journey.subTopics.every((subTopic) => subTopic.isCompleted);
   }
 
   Future<void> _refresh() async {
@@ -92,81 +112,98 @@ class _CourseListScreenState extends State<CourseListScreen> {
 
           return RefreshIndicator(
             onRefresh: _refresh,
-            child: ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: journeys.length,
-              itemBuilder: (context, index) {
-                final journey = journeys[index];
-                /*final total = journey.subTopics.length;
-                final completed = journey.subTopics
-                    .where((t) => t.isCompleted)
-                    .length;
-                final streak = _calculateStreak(journey.subTopics);*/
+            child: CustomScrollView(
+              slivers: [
+                // Title Section
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                    child: Text(
+                      "My Courses",
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ),
 
-                return GestureDetector(
-                  onTap: () async {
-                    try {
-                      final detailed = await widget.repository
-                          .getJourneyDetails(userId, journey.id);
+                // Course List
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final journey = journeys[index];
 
-                      if (!mounted) return;
+                      return GestureDetector(
+                        onTap: () async {
+                          try {
+                            final detailed = await widget.repository
+                                .getJourneyDetails(userId, journey.id);
 
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => GeneratedRoadmapScreen(
-                            journey: detailed,
-                            repository: widget.repository,
-                            userId: userId,
+                            if (!mounted) return;
+
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => GeneratedRoadmapScreen(
+                                  journey: detailed,
+                                  repository: widget.repository,
+                                  userId: userId,
+                                ),
+                              ),
+                            );
+
+                            _refresh();
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Failed to open course: $e"),
+                              ),
+                            );
+                          }
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: CourseProgressCard(
+                            journey: journey,
+                            onContinue: (subTopic) async {
+                              try {
+                                final detailed = await widget.repository
+                                    .getJourneyDetails(userId, journey.id);
+
+                                if (!mounted) return;
+
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => GeneratedRoadmapScreen(
+                                      journey: detailed,
+                                      repository: widget.repository,
+                                      userId: userId,
+                                    ),
+                                  ),
+                                );
+
+                                _refresh();
+                              } catch (e) {
+                                if (!mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("Failed to open course: $e"),
+                                  ),
+                                );
+                              }
+                            },
                           ),
                         ),
                       );
-
-                      _refresh();
-                    } catch (e) {
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Failed to open course: $e")),
-                      );
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: CourseProgressCard(
-                      journey: journey,
-                      onContinue: (subTopic) async {
-                        // This is the same logic from your GestureDetector's onTap
-                        try {
-                          final detailed = await widget.repository
-                              .getJourneyDetails(userId, journey.id);
-
-                          if (!mounted) return;
-
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => GeneratedRoadmapScreen(
-                                journey: detailed,
-                                repository: widget.repository,
-                                userId: userId,
-                              ),
-                            ),
-                          );
-
-                          _refresh();
-                        } catch (e) {
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Failed to open course: $e"),
-                            ),
-                          );
-                        }
-                      },
-                    ),
+                    }, childCount: journeys.length),
                   ),
-                );
-              },
+                ),
+              ],
             ),
           );
         },

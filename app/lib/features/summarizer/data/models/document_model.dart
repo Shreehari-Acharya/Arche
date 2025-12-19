@@ -17,7 +17,7 @@ class DocumentModel extends Document {
       mimeType: json['mimeType'] as String,
       size: json['size'] as int,
       createdAt: DateTime.parse(json['createdAt'] as String),
-      summary: json['summary'] as String?,
+      summary: null, // Summary is fetched separately
     );
   }
 
@@ -28,7 +28,6 @@ class DocumentModel extends Document {
       'mimeType': mimeType,
       'size': size,
       'createdAt': createdAt.toIso8601String(),
-      'summary': summary,
     };
   }
 }

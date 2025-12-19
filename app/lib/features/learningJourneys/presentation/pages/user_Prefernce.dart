@@ -242,7 +242,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget _step5() {
     return _radioGroup(
       title: "Time period",
-      options: ["1 Week", "2 Weeks", "1 Month"],
+      options: ["1 Week", "2 Weeks", "4 Weeks"],
       selectedValue: timePeriod,
       onChanged: (v) => setState(() => timePeriod = v),
     );

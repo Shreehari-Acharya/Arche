@@ -11,12 +11,14 @@ class UploadCard extends StatefulWidget {
   final Color brandColor;
   final DocumentRepository repository;
   final ChatRepository chatRepository;
+  final VoidCallback? onUploadComplete; // Add callback
 
   const UploadCard({
     super.key,
     required this.brandColor,
     required this.repository,
     required this.chatRepository,
+    this.onUploadComplete, // Add this
   });
 
   @override
@@ -103,6 +105,9 @@ class _UploadCardState extends State<UploadCard> {
             setState(() {
               _isUploading = false;
             });
+
+            // Notify parent to refresh history
+            widget.onUploadComplete?.call();
 
             Navigator.push(
               context,
