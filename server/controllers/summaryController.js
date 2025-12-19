@@ -162,17 +162,15 @@ export async function getFollowUp(req, res) {
         const {fileId, userId} = req.query;
 
     
-        const preSignedUrl = await getSignedUrlForKey(`uploads/${userId}/${fileId}`)
+        const preSignedUrl = await getSignedUrlForKey(`summaries/${userId}/${fileId}.md`);
         const summaryResponse = await fetch(preSignedUrl);
         const summaryText = await summaryResponse.text();
         
-    
         const response = await followUp(summaryText, query)
     
         // replace prev md file in s3 with the new appended one
     
-        const updatedMdFile = `
-        ${summaryText}
+        const updatedMdFile = `${summaryText}
         
         ${response}
         `

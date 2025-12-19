@@ -63,7 +63,7 @@ class _ArcheShellState extends State<ArcheShell> {
     // Special case: + Button (index = 2)
     // Opens Onboarding and DOES NOT change tab
     // ----------------------------------------
-    if (index == 5) {
+    if (index == 2) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const OnboardingScreen()),

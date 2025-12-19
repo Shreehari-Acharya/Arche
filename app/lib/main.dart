@@ -12,6 +12,7 @@ import 'features/core/presentation/navigation/arche_shell.dart';
 
 // AUTH LAYERS
 import 'features/auth/data/datasources/auth_remote_data_source.dart';
+import 'features/auth/data/datasources/auth_local_data_source.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/usecases/login_use_cases.dart';
 import 'features/auth/domain/usecases/register_use_cases.dart';
@@ -20,6 +21,7 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 void main() {
   final authRepository = AuthRepositoryImpl(
     authRemoteDataSource: AuthRemoteDataSource(),
+    authLocalDataSource: AuthLocalDataSource(),
   );
 
   runApp(ArcheApp(authRepository: authRepository));
@@ -34,7 +36,7 @@ class ArcheApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiRepositoryProvider(
       providers: [
-        RepositoryProvider.value(value: authRepository),
+        RepositoryProvider<AuthRepositoryImpl>.value(value: authRepository),
         RepositoryProvider(create: (context) => QuizRepository()),
       ],
       child: MultiBlocProvider(
@@ -60,8 +62,26 @@ class ArcheApp extends StatelessWidget {
 
           // ----------------------------------------------------
           // FIRST PAGE SHOWN WHEN APP OPENS
+          // Check if user is logged in and show appropriate page
           // ----------------------------------------------------
-          home: const HomePage(),
+          home: FutureBuilder<bool>(
+            future: authRepository.isLoggedIn(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+              
+              // If user is logged in, go directly to app shell
+              if (snapshot.data == true) {
+                return const ArcheShell();
+              }
+              
+              // Otherwise show welcome page
+              return const HomePage();
+            },
+          ),
 
           // ----------------------------------------------------
           // NAVIGATION ROUTES
@@ -69,6 +89,7 @@ class ArcheApp extends StatelessWidget {
           routes: {
             '/login': (_) => const LoginPage(),
             '/register': (_) => const SignUpScreen(),
+            '/home': (_) => const HomePage(),
 
             // After login / signup → go to main app shell
             '/arche': (_) => const ArcheShell(),

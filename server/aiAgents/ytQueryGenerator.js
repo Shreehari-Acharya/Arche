@@ -22,10 +22,14 @@ async function queryAgent(query) {
 
 export async function ytResourceFinder(query) {
     const ytSearchQuery = await queryAgent(query);
-    console.log(ytSearchQuery)
+    // console.log(ytSearchQuery)
+
+    if (ytSearchQuery.trim().length <=3 ) {
+        return "";
+    }
     const ytVideo = await searchYouTube(ytSearchQuery, 2);
 
-    console.log(ytVideo)
+    // console.log(ytVideo)
 
     // create markdown to append
 
