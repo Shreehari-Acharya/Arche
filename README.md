@@ -5,6 +5,13 @@
 
 ---
 
+## Demo Video
+
+
+https://github.com/user-attachments/assets/d5b6edad-9a66-490b-a0a0-59d5c53cbc34
+
+
+
 ## **Core Features**
 
 ### **Topic-Based Resource Discovery**
